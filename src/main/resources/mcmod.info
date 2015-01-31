@@ -1,0 +1,16 @@
+[
+{
+  "modid": "assortedutilities",
+  "name": "Assorted Utilities",
+  "description": "A mod adding assorted utility blocks",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Lyqyd"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
