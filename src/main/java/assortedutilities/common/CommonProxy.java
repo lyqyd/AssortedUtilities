@@ -11,6 +11,9 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayerFactory;
 import assortedutilities.AssortedUtilities;
 import assortedutilities.common.block.ObliteratorBlock;
+import assortedutilities.common.block.PortalBlock;
+import assortedutilities.common.block.PortalControllerBlock;
+import assortedutilities.common.block.PortalFrameBlock;
 import assortedutilities.common.util.AULog;
 
 public class CommonProxy {
@@ -34,24 +37,32 @@ public class CommonProxy {
 			AssortedUtilities.Blocks.obliteratorBlock = new ObliteratorBlock();
 			count++;
 		}
-		AULog.info("Registered %d blocks.", count);
+		if (true) {
+			AssortedUtilities.Blocks.portalFrameBlock = new PortalFrameBlock();
+			count++;
+			AssortedUtilities.Blocks.portalControllerBlock = new PortalControllerBlock();
+			count++;
+			AssortedUtilities.Blocks.portalBlock = new PortalBlock();
+			count++;
+		}
+		AULog.debug("Registered %d blocks.", count);
 	}
 	
 	private void registerRecipes() {
 		int count = 0;
-		if (AssortedUtilities.Config.obliteratorEnabled) {
-			ItemStack fourOblits = new ItemStack(AssortedUtilities.Blocks.obliteratorBlock, 4);
+		if (AssortedUtilities.Config.obliteratorEnabled && AssortedUtilities.Config.obliteratorRecipeEnabled) {
+			ItemStack obliterator = new ItemStack(AssortedUtilities.Blocks.obliteratorBlock, 1);
 			ItemStack cobblestone = new ItemStack((Block)Block.blockRegistry.getObject("cobblestone"));
 			ItemStack obsidian = new ItemStack((Block)Block.blockRegistry.getObject("obsidian"));
 			ItemStack bucket = new ItemStack((Item)Item.itemRegistry.getObject("lava_bucket"));
-			GameRegistry.addRecipe(fourOblits,
+			GameRegistry.addRecipe(obliterator,
 					"o o",
 					"clc",
 					"ccc",
 					'o', obsidian, 'c', cobblestone, 'l', bucket);
 			count++;
 		}
-		AULog.info("Registered %d recipes.", count);
+		AULog.debug("Registered %d recipes.", count);
 	}
 	
 	public static WeakReference<EntityPlayer> assortedUtilitiesPlayer = new WeakReference<EntityPlayer>(null);

@@ -7,6 +7,9 @@ import com.mojang.authlib.GameProfile;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import assortedutilities.common.CommonProxy;
+import assortedutilities.common.block.PortalBlock;
+import assortedutilities.common.block.PortalControllerBlock;
+import assortedutilities.common.block.PortalFrameBlock;
 import assortedutilities.common.block.ObliteratorBlock;
 import assortedutilities.common.util.AULog;
 import cpw.mods.fml.common.Mod;
@@ -21,10 +24,14 @@ public class AssortedUtilities {
 
 	public static class Blocks {
 		public static ObliteratorBlock obliteratorBlock;
+		public static PortalFrameBlock portalFrameBlock;
+		public static PortalControllerBlock portalControllerBlock;
+		public static PortalBlock portalBlock;
 	}
 	
 	public static class Config {
 		public static boolean obliteratorEnabled;
+		public static boolean obliteratorRecipeEnabled;
 	}
 	
 	@Instance(value = "AssortedUtilities")
@@ -39,28 +46,32 @@ public class AssortedUtilities {
 	public void preInit(FMLPreInitializationEvent event) {
 		long time = System.nanoTime();
 		AULog.init();
-		AULog.info("Starting pre-init");
+		AULog.debug("Starting pre-init");
 		
 		Configuration configFile = new Configuration(event.getSuggestedConfigurationFile());
 		
-		Property prop = configFile.get("blocks", "obliteratorEnabled", true);
+		Property prop = configFile.get("blocks", "enableObliterator", true);
 		prop.comment = "Set to false to disable Obliterator blocks.";
 		Config.obliteratorEnabled = prop.getBoolean();
+		
+		prop = configFile.get("recipes", "enableObliteratorRecipe", true);
+		prop.comment = "Set to false to disable the crafting recipe for Obliterator blocks.";
+		Config.obliteratorRecipeEnabled = prop.getBoolean();
 		
 		configFile.save();
 		
 		proxy.preInit();
 		
-		AULog.info("Finished pre-init in %d ms", (System.nanoTime() - time) / 1000000);
+		AULog.debug("Finished pre-init in %d ms", (System.nanoTime() - time) / 1000000);
 	}
 	
 	@EventHandler
 	public void init(FMLInitializationEvent event) {
 		long time = System.nanoTime();
-		AULog.info("Starting init");
+		AULog.debug("Starting init");
 		
 		proxy.init();
 		
-		AULog.info("Finished init in %d ms", (System.nanoTime() - time) / 1000000);
+		AULog.debug("Finished init in %d ms", (System.nanoTime() - time) / 1000000);
 	}
 }
