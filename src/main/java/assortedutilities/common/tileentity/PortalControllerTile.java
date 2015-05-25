@@ -33,6 +33,7 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 	private boolean updatePortal = true;
 	private boolean portalLit = false;
 	private int portalPlane = 0;
+	private boolean updateCard = false;
 	
 	public PortalControllerTile() {
 		super();
@@ -43,6 +44,13 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 	public void updateEntity() {
 		super.updateEntity();
 		if (!worldObj.isRemote) {
+			if (updateCard) {
+				if (this.inventory.getStackInSlot(0) != null) {
+					worldObj.setBlockMetadataWithNotify(xCoord, yCoord, zCoord, worldObj.getBlockMetadata(xCoord, yCoord, zCoord) | 8, 3);
+				} else {
+					worldObj.setBlockMetadataWithNotify(xCoord, yCoord, zCoord, worldObj.getBlockMetadata(xCoord, yCoord, zCoord) & 7, 3);
+				}
+			}
 			if (updateFrame) {
 				AULog.debug("Updating frame state");
 				validateRing();
@@ -65,8 +73,9 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 					if (meta > 0) {
 						int dim = stack.stackTagCompound.getInteger("dim");
 						double x = stack.stackTagCompound.getDouble("x"), y = stack.stackTagCompound.getDouble("y"), z = stack.stackTagCompound.getDouble("z");
+						float yaw = stack.stackTagCompound.getFloat("yaw");
 						if (portalSpaceClear()) {
-							lightPortal(meta, x, y, z, dim);
+							lightPortal(meta, x, y, z, dim, yaw);
 						}
 					}
 				} else if (portalLit) {
@@ -97,6 +106,7 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 		super.readFromNBT(tag);
 		NBTTagCompound item = tag.getCompoundTag("item");
 		inventory.setInventorySlotContents(0, ItemStack.loadItemStackFromNBT(item));
+		portalLit = tag.getBoolean("portalLit");
 		this.markDirty();
 	}
 	
@@ -108,10 +118,11 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 			stack.writeToNBT(item);
 		}
 		tag.setTag("item", item);
+		tag.setBoolean("portalLit", portalLit);
 	}
 	
 	public Vec3 getTranslation() {
-		int meta = worldObj.getBlockMetadata(xCoord, yCoord, zCoord);
+		int meta = worldObj.getBlockMetadata(xCoord, yCoord, zCoord) & 7;
 		switch (meta) {
 			case 0:
 			case 1:
@@ -128,26 +139,32 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 	
 	public float getYRotation() {
 		float[] rotation = {0,0,180,0,270,90};
-		return rotation[worldObj.getBlockMetadata(xCoord, yCoord, zCoord)];
+		return rotation[worldObj.getBlockMetadata(xCoord, yCoord, zCoord) & 7];
 	}
 	
 	public float getXRotation() {
 		float[] rotation = {90,270,0,0,0,0};
-		return rotation[worldObj.getBlockMetadata(xCoord, yCoord, zCoord)];
+		return rotation[worldObj.getBlockMetadata(xCoord, yCoord, zCoord) & 7];
+	}
+	
+	public boolean isCardPresent() {
+		return (worldObj.getBlockMetadata(xCoord, yCoord, zCoord) & 8) == 8;
 	}
 	
 	private boolean validateRing() {
-		ChunkCoordinates start = null;
-		ChunkCoordinates[] frameNeighbors = getFrameNeighbors(this.worldObj, this.xCoord, this.yCoord, this.zCoord);
-		for (int i = 0; i < frameNeighbors.length; i++) {
-			if (frameNeighbors[i] != null) {
-				start = frameNeighbors[i];
-				break;
-			}
-		}
-		
-		if (start != null) {
-			Block currBlock = worldObj.getBlock(start.posX, start.posY, start.posZ);
+		int[][] translation = {
+				{0, -1, 0},
+				{0, 1, 0},
+				{0, 0, -1},
+				{0, 0, 1},
+				{-1, 0, 0},
+				{1, 0, 0},
+		};
+		int meta = worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) & 7;
+		ChunkCoordinates start = new ChunkCoordinates(this.xCoord + translation[meta][0], this.yCoord + translation[meta][1], this.zCoord + translation[meta][2]);
+
+		Block currBlock = worldObj.getBlock(start.posX, start.posY, start.posZ);
+		if (currBlock instanceof PortalFrameBlock) {
 			ArrayList<ChunkCoordinates> result = findPortalFrameRing(worldObj, start.posX, start.posY, start.posZ);
 			if (result != null) {
 				ring = result;
@@ -157,14 +174,16 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 				return true;
 			}
 		}
+
 		if (ring != null && !ring.isEmpty()) {
+			extinguishPortal();
 			extinguishRing();
 			ring = new ArrayList<ChunkCoordinates>();
 			interior = new ArrayList<ChunkCoordinates>();
 		}
 		return false;
 	}
-	
+
 	private boolean portalSpaceClear() {
 		for (ChunkCoordinates location : this.interior){
 			if (!worldObj.isAirBlock(location.posX, location.posY, location.posZ)){
@@ -186,13 +205,13 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 		}
 	}
 	
-	private void lightPortal(int meta, double x, double y, double z, int dim) {
+	private void lightPortal(int meta, double x, double y, double z, int dim, float yaw) {
 		AULog.debug("Setting up portal blocks");
 		for (ChunkCoordinates portal : this.interior) {
 			worldObj.setBlock(portal.posX, portal.posY, portal.posZ, AssortedUtilities.Blocks.portalBlock, meta, 3);
 			TileEntity tile = worldObj.getTileEntity(portal.posX, portal.posY, portal.posZ);
 			if (tile instanceof PortalTile) {
-				((PortalTile)tile).setDestination(x, y, z, dim);
+				((PortalTile)tile).setDestination(x, y, z, dim, yaw);
 			}
 		}
 		portalLit = true;
@@ -219,12 +238,12 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 	
 	public ArrayList<PortalControllerTile> getConnectedControllers(World world, int x, int y, int z) {
 		ArrayList<PortalControllerTile> result = new ArrayList<PortalControllerTile>();
-		if (world.getBlock(x, y - 1, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y - 1, z));}
-		if (world.getBlock(x, y + 1, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y + 1, z));}
-		if (world.getBlock(x, y, z - 1) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y, z - 1));}
-		if (world.getBlock(x, y, z + 1) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y, z + 1));}
-		if (world.getBlock(x - 1, y, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x - 1, y, z));}
-		if (world.getBlock(x + 1, y, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x + 1, y, z));}
+		if (world.getBlock(x, y - 1, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y - 1, z) & 7) == 1) {result.add((PortalControllerTile) world.getTileEntity(x, y - 1, z));}
+		if (world.getBlock(x, y + 1, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y + 1, z) & 7) == 0) {result.add((PortalControllerTile) world.getTileEntity(x, y + 1, z));}
+		if (world.getBlock(x, y, z - 1) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y, z - 1) & 7) == 3) {result.add((PortalControllerTile) world.getTileEntity(x, y, z - 1));}
+		if (world.getBlock(x, y, z + 1) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y, z + 1) & 7) == 2) {result.add((PortalControllerTile) world.getTileEntity(x, y, z + 1));}
+		if (world.getBlock(x - 1, y, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x - 1, y, z) & 7) == 5) {result.add((PortalControllerTile) world.getTileEntity(x - 1, y, z));}
+		if (world.getBlock(x + 1, y, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x + 1, y, z) & 7) == 4) {result.add((PortalControllerTile) world.getTileEntity(x + 1, y, z));}
 		return result;
 	}
 	
@@ -309,7 +328,6 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 
 	private ArrayList<ChunkCoordinates> findPortalFrameRing(World world, int x, int y, int z) {
 		ChunkCoordinates origin = new ChunkCoordinates(x, y, z);
-		AULog.debug("Origin: %s", origin.toString());
 		ArrayList<ChunkCoordinates> result = new ArrayList<ChunkCoordinates>();
 		ChunkCoordinates last = origin;
 		ChunkCoordinates current = origin;
@@ -317,10 +335,8 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 		
 		while (true) {
 			result.add(current);
-			AULog.debug("Adding current block to list: %s", current.toString());
 			Block currBlock = world.getBlock(current.posX, current.posY, current.posZ);
 			if (currBlock instanceof PortalFrameBlock) {
-				AULog.debug("Current block is instance of PFB");
 				PortalFrameBlock portalFrame = (PortalFrameBlock)currBlock;
 				ChunkCoordinates[] neighbors = portalFrame.getFrameNeighbors(world, current.posX, current.posY, current.posZ);
 				ChunkCoordinates next = null;
@@ -330,7 +346,6 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 						neighborCount++;
 						if (!last.equals(neighbors[i])) {
 							next = neighbors[i];
-							AULog.debug("Next found, is %s", next.toString());
 							switch(i) {
 								case 0:
 								case 1:
@@ -450,6 +465,7 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 	public ItemStack decrStackSize(int slot, int quantity) {
 		AULog.info("Setting flag for portal update.");
 		this.updatePortal = true;
+		this.updateCard  = true;
 		this.markDirty();
 		return inventory.decrStackSize(slot, quantity);
 	}
@@ -465,8 +481,9 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 			inventory.setInventorySlotContents(slot, stack);
 		}
 		this.markDirty();
-		AULog.info("Setting flag for portal update.");
+		AULog.debug("Setting flag for portal update.");
 		this.updatePortal = true;
+		this.updateCard = true;
 	}
 
 	@Override

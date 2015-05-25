@@ -36,7 +36,7 @@ public class CommonProxy {
 	
 	private void registerItems() {
 		int count = 0;
-		if (true) {
+		if (AssortedUtilities.Config.portalsEnabled) {
 			AssortedUtilities.Items.locationCard = new PortalLocationItem();
 			GameRegistry.registerItem(AssortedUtilities.Items.locationCard, "locationCard", "assortedutilities");
 			count++;
@@ -51,7 +51,7 @@ public class CommonProxy {
 			AssortedUtilities.Blocks.obliteratorBlock = new ObliteratorBlock();
 			count++;
 		}
-		if (true) {
+		if (AssortedUtilities.Config.portalsEnabled) {
 			AssortedUtilities.Blocks.portalFrameBlock = new PortalFrameBlock();
 			count++;
 			AssortedUtilities.Blocks.portalControllerBlock = new PortalControllerBlock();
@@ -78,10 +78,38 @@ public class CommonProxy {
 			count++;
 		}
 		
-		if (true) {
+		if (AssortedUtilities.Config.portalsEnabled) {
 			ItemStack locationCard = new ItemStack(AssortedUtilities.Items.locationCard, 1);
-			GameRegistry.addShapelessRecipe(locationCard, new Object[] {locationCard});
-			count++;
+			ItemStack portalFrame = new ItemStack(AssortedUtilities.Blocks.portalFrameBlock);
+			ItemStack iron = new ItemStack((Item)Item.itemRegistry.getObject("iron_ingot"));
+			if (AssortedUtilities.Config.portalLocationCardRecipeEnabled) {
+				ItemStack enderEye = new ItemStack((Item)Item.itemRegistry.getObject("ender_eye"));
+				ItemStack redstone = new ItemStack((Item)Item.itemRegistry.getObject("redstone"));
+				GameRegistry.addShapelessRecipe(locationCard, new Object[] {iron, enderEye, redstone});
+				count++;
+			}
+			if (AssortedUtilities.Config.portalLocationCardResetRecipeEnabled) {
+				GameRegistry.addShapelessRecipe(locationCard, new Object[] {locationCard});
+				count++;
+			}
+			if (AssortedUtilities.Config.portalFrameRecipeEnabled) {
+				ItemStack enderPearl = new ItemStack((Item)Item.itemRegistry.getObject("ender_pearl"));
+				GameRegistry.addRecipe(portalFrame,
+						"i i",
+						" p ",
+						"i i",
+						'i', iron, 'p', enderPearl);
+				count++;
+			}
+			if (AssortedUtilities.Config.portalControllerRecipeEnabled) {
+				ItemStack portalController = new ItemStack(AssortedUtilities.Blocks.portalControllerBlock);
+				GameRegistry.addRecipe(portalController,
+						"fff",
+						"f f",
+						"fff",
+						'f', portalFrame);
+				count++;
+			}
 		}
 		
 		AULog.debug("Registered %d recipes.", count);

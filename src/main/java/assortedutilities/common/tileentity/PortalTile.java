@@ -23,6 +23,7 @@ public class PortalTile extends TileEntity {
 	
 	private Vec3 destination;
 	private int destDimension = 0;
+	private float yaw;
 	
 	public void onCollide(Entity entity) {
 		if (!worldObj.isRemote && destination != null) {
@@ -54,7 +55,7 @@ public class PortalTile extends TileEntity {
 		
 		        if (entity.isEntityAlive())
 		        {
-		            entity.setLocationAndAngles(x, y, z, entity.rotationYaw, entity.rotationPitch);
+		            entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
 		            worldserver1.spawnEntityInWorld(entity);
 		            worldserver1.updateEntityWithOptionalForce(entity, false);
 		        }
@@ -65,7 +66,7 @@ public class PortalTile extends TileEntity {
 		        
 		        if (entityMP != null) {
 			        configurationManager.func_72375_a(entityMP, worldserver);
-			        entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, entity.rotationYaw, entity.rotationPitch);
+			        entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, yaw, entity.rotationPitch);
 			        entityMP.theItemInWorldManager.setWorld(worldserver1);
 			        configurationManager.updateTimeAndWeatherForPlayer(entityMP, worldserver1);
 			        configurationManager.syncPlayerInventory(entityMP);
@@ -82,20 +83,23 @@ public class PortalTile extends TileEntity {
 	        
 	        AULog.debug("Setting new position: %f %f %f", x, y, z);
 	        entity.setPosition(x, y, z);
-	        if (entityMP != null) {entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, entity.rotationYaw, entity.rotationPitch);}
+	        if (entityMP != null) {entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, yaw, entity.rotationPitch);}
 	        worldserver1.updateEntityWithOptionalForce(entity, false);
 		}
 	}
 
-	public void setDestination(double x, double y, double z, int dim) {
-		destination = Vec3.createVectorHelper(x, y, z);
-		destDimension = dim;
+	public void setDestination(double x, double y, double z, int dim, float yaw) {
+		this.destination = Vec3.createVectorHelper(x, y, z);
+		this.destDimension = dim;
+		this.yaw = yaw;
+		this.markDirty();
 	}
 	
 	public void readFromNBT(NBTTagCompound tag) {
 		super.readFromNBT(tag);
-		NBTTagCompound dest = tag.getCompoundTag("dest");
+		NBTTagCompound dest = tag.getCompoundTag("destination");
 		destination = Vec3.createVectorHelper(dest.getDouble("x"), dest.getDouble("y"), dest.getDouble("z"));
+		yaw = dest.getFloat("yaw");
 		destDimension = dest.getInteger("dim");
 	}
 	
@@ -105,6 +109,7 @@ public class PortalTile extends TileEntity {
 		dest.setDouble("x", destination.xCoord);
 		dest.setDouble("y", destination.yCoord);
 		dest.setDouble("z", destination.zCoord);
+		dest.setFloat("yaw", yaw);
 		dest.setInteger("dim", destDimension);
 		tag.setTag("destination", dest);
 	}

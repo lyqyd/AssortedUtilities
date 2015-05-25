@@ -149,12 +149,12 @@ public class PortalFrameBlock extends Block {
 	
 	public ArrayList<PortalControllerTile> getConnectedControllers(World world, int x, int y, int z) {
 		ArrayList<PortalControllerTile> result = new ArrayList<PortalControllerTile>();
-		if (world.getBlock(x, y - 1, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y - 1, z));}
-		if (world.getBlock(x, y + 1, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y + 1, z));}
-		if (world.getBlock(x, y, z - 1) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y, z - 1));}
-		if (world.getBlock(x, y, z + 1) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x, y, z + 1));}
-		if (world.getBlock(x - 1, y, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x - 1, y, z));}
-		if (world.getBlock(x + 1, y, z) instanceof PortalControllerBlock) {result.add((PortalControllerTile) world.getTileEntity(x + 1, y, z));}
+		if (world.getBlock(x, y - 1, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y - 1, z) & 7) == 1) {result.add((PortalControllerTile) world.getTileEntity(x, y - 1, z));}
+		if (world.getBlock(x, y + 1, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y + 1, z) & 7) == 0) {result.add((PortalControllerTile) world.getTileEntity(x, y + 1, z));}
+		if (world.getBlock(x, y, z - 1) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y, z - 1) & 7) == 3) {result.add((PortalControllerTile) world.getTileEntity(x, y, z - 1));}
+		if (world.getBlock(x, y, z + 1) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y, z + 1) & 7) == 2) {result.add((PortalControllerTile) world.getTileEntity(x, y, z + 1));}
+		if (world.getBlock(x - 1, y, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x - 1, y, z) & 7) == 5) {result.add((PortalControllerTile) world.getTileEntity(x - 1, y, z));}
+		if (world.getBlock(x + 1, y, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x + 1, y, z) & 7) == 4) {result.add((PortalControllerTile) world.getTileEntity(x + 1, y, z));}
 		return result;
 	}
 	

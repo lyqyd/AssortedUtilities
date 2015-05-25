@@ -20,7 +20,7 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = "AssortedUtilities", name = "Assorted Utilities", version = "0.0.1")
+@Mod(modid = "AssortedUtilities", name = "Assorted Utilities", version = "0.0.2")
 public class AssortedUtilities {
 	
 	public static class Items {
@@ -37,6 +37,11 @@ public class AssortedUtilities {
 	public static class Config {
 		public static boolean obliteratorEnabled;
 		public static boolean obliteratorRecipeEnabled;
+		public static boolean portalsEnabled;
+		public static boolean portalFrameRecipeEnabled;
+		public static boolean portalControllerRecipeEnabled;
+		public static boolean portalLocationCardRecipeEnabled;
+		public static boolean portalLocationCardResetRecipeEnabled;
 	}
 	
 	@Instance(value = "AssortedUtilities")
@@ -55,13 +60,32 @@ public class AssortedUtilities {
 		
 		Configuration configFile = new Configuration(event.getSuggestedConfigurationFile());
 		
-		Property prop = configFile.get("blocks", "enableObliterator", true);
+		//obliterator config
+		Property prop = configFile.get("obliterator", "enableObliterator", true);
 		prop.comment = "Set to false to disable Obliterator blocks.";
 		Config.obliteratorEnabled = prop.getBoolean();
 		
-		prop = configFile.get("recipes", "enableObliteratorRecipe", true);
+		prop = configFile.get("obliterator", "enableObliteratorRecipe", true);
 		prop.comment = "Set to false to disable the crafting recipe for Obliterator blocks.";
 		Config.obliteratorRecipeEnabled = prop.getBoolean();
+		
+		//portal system config
+		prop = configFile.get("portal", "enablePortals", true);
+		prop.comment = "Set to false to disable the portal system (disables all portal system blocks/items).";
+		Config.portalsEnabled = prop.getBoolean();
+		
+		prop = configFile.get("portal", "enablePortalFrameRecipe", true);
+		prop.comment = "Set to false to disable the crafting recipe for Portal Frame blocks.";
+		Config.portalFrameRecipeEnabled = prop.getBoolean();
+		prop = configFile.get("portal", "enablePortalControllerRecipe", true);
+		prop.comment = "Set to false to disable the crafting recipe for Portal Controller blocks.";
+		Config.portalControllerRecipeEnabled = prop.getBoolean();
+		prop = configFile.get("portal", "enableLocationCardRecipe", true);
+		prop.comment = "Set to false to disable the crafting recipe for Location Card items.";
+		Config.portalLocationCardRecipeEnabled = prop.getBoolean();
+		prop = configFile.get("portal", "enableLocationCardResetRecipe", true);
+		prop.comment = "Set to false to disable the crafting recipe to reset Location Card items.";
+		Config.portalLocationCardResetRecipeEnabled = prop.getBoolean();
 		
 		configFile.save();
 		

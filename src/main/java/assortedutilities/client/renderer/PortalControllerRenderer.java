@@ -17,7 +17,7 @@ import net.minecraftforge.client.IItemRenderer;
 public class PortalControllerRenderer extends TileEntitySpecialRenderer implements IItemRenderer {
 
 	static float texPixel=1.0f/16f;
-	static float depthInset = 0.5f;
+	static float depthInset = 0.75f;
 	static float widthOffset = 0.5f/16f;
 	static float heightOffset = 5.0f/16f;
 	
@@ -51,10 +51,10 @@ public class PortalControllerRenderer extends TileEntitySpecialRenderer implemen
 		tessellator.addVertexWithUV( texPixel,    1f-texPixel, 0.001f + depthInset, texPixel,     1f-texPixel);
 		tessellator.addVertexWithUV( texPixel,    texPixel,    0.001f + depthInset, texPixel,     texPixel);
 		//left lip front
-		tessellator.addVertexWithUV( 1f-texPixel, texPixel,    0.001f + 0.5f,       1f-texPixel,  texPixel);
-		tessellator.addVertexWithUV( 1f-texPixel, 1f-texPixel, 0.001f + 0.5f,       1f-texPixel,  1f-texPixel);
-		tessellator.addVertexWithUV( 1f,          1f,          0.001f + 0.5f,       1f,           1f);
-		tessellator.addVertexWithUV( 1f,          0f,          0.001f + 0.5f,       1f,           0f);
+		tessellator.addVertexWithUV( 1f-texPixel, texPixel,    0.001f + depthInset, 1f-texPixel,  texPixel);
+		tessellator.addVertexWithUV( 1f-texPixel, 1f-texPixel, 0.001f + depthInset, 1f-texPixel,  1f-texPixel);
+		tessellator.addVertexWithUV( 1f,          1f,          0.001f + depthInset, 1f,           1f);
+		tessellator.addVertexWithUV( 1f,          0f,          0.001f + depthInset, 1f,           0f);
 
 		//bottom lip inside
 		tessellator.setNormal(0f,1f,0f);
@@ -89,35 +89,35 @@ public class PortalControllerRenderer extends TileEntitySpecialRenderer implemen
 		//l/r  vertical  b/f
 		//top side
 		tessellator.setNormal(0f,1f,0f);
-		tessellator.addVertexWithUV(0f, 1f, 1f - depthInset, 0f,         1f); //lf
-		tessellator.addVertexWithUV(0f, 1f, 1f,              depthInset, 1f); //lr
-		tessellator.addVertexWithUV(1f, 1f, 1f,              depthInset, 0f); //rr
-		tessellator.addVertexWithUV(1f, 1f, 1f - depthInset, 0f,         0f); //rf
+		tessellator.addVertexWithUV(0f, 1f, depthInset, 0f,              1f); //lf
+		tessellator.addVertexWithUV(0f, 1f, 1f,         1f - depthInset, 1f); //lr
+		tessellator.addVertexWithUV(1f, 1f, 1f,         1f - depthInset, 0f); //rr
+		tessellator.addVertexWithUV(1f, 1f, depthInset, 0f,              0f); //rf
 		//bottom side
 		tessellator.setNormal(0f,-1f,0f);
-		tessellator.addVertexWithUV(0f, 0f, 1f,              depthInset, 1f); //lr
-		tessellator.addVertexWithUV(0f, 0f, 1f - depthInset, 0f,         1f); //lf
-		tessellator.addVertexWithUV(1f, 0f, 1f - depthInset, 0f,         0f); //rf
-		tessellator.addVertexWithUV(1f, 0f, 1f,              depthInset, 0f); //rr
+		tessellator.addVertexWithUV(0f, 0f, 1f,         1f - depthInset, 1f); //lr
+		tessellator.addVertexWithUV(0f, 0f, depthInset, 0f,              1f); //lf
+		tessellator.addVertexWithUV(1f, 0f, depthInset, 0f,              0f); //rf
+		tessellator.addVertexWithUV(1f, 0f, 1f,         1f - depthInset, 0f); //rr
 		//right side
 		tessellator.setNormal(-1f,0f,0f);
-		tessellator.addVertexWithUV(1f, 0f, 1f,              0f,         1f);
-		tessellator.addVertexWithUV(1f, 0f, 1f - depthInset, depthInset, 1f);
-		tessellator.addVertexWithUV(1f, 1f, 1f - depthInset, depthInset, 0f);
-		tessellator.addVertexWithUV(1f, 1f, 1f,              0f,         0f);
+		tessellator.addVertexWithUV(1f, 0f, 1f,         0f,              1f);
+		tessellator.addVertexWithUV(1f, 0f, depthInset, 1f - depthInset, 1f);
+		tessellator.addVertexWithUV(1f, 1f, depthInset, 1f - depthInset, 0f);
+		tessellator.addVertexWithUV(1f, 1f, 1f,         0f,              0f);
 		//left side
 		tessellator.setNormal(1f,0f,0f);
-		tessellator.addVertexWithUV(0f, 0f, 1f - depthInset, depthInset, 1f);
-		tessellator.addVertexWithUV(0f, 0f, 1f,              0f,         1f);
-		tessellator.addVertexWithUV(0f, 1f, 1f,              0f,         0f);
-		tessellator.addVertexWithUV(0f, 1f, 1f - depthInset, depthInset, 0f);
+		tessellator.addVertexWithUV(0f, 0f, depthInset, 1f - depthInset, 1f);
+		tessellator.addVertexWithUV(0f, 0f, 1f,         0f,              1f);
+		tessellator.addVertexWithUV(0f, 1f, 1f,         0f,              0f);
+		tessellator.addVertexWithUV(0f, 1f, depthInset, 1f - depthInset, 0f);
 		
 		tessellator.draw();
 
 		if (displayCard) {
 			//draw location card sticking out of controller
-			float backEnd = 5f/16f;
-			float frontEnd = 9f/16f;
+			float backEnd = depthInset - 3f/16f;
+			float frontEnd = depthInset + 1f/16f;
 
 			this.bindTexture(new ResourceLocation("assortedutilities", "textures/items/locationCard.png"));
 			
@@ -125,7 +125,7 @@ public class PortalControllerRenderer extends TileEntitySpecialRenderer implemen
 			//l/r  vertical  b/f
 			//top side
 			tessellator.setNormal(0f,1f,0f);
-			tessellator.addVertexWithUV(0.5f - widthOffset, 1f  -heightOffset, backEnd,  2f/16f,  4f/16f); //lf
+			tessellator.addVertexWithUV(0.5f - widthOffset, 1f - heightOffset, backEnd,  2f/16f,  4f/16f); //lf
 			tessellator.addVertexWithUV(0.5f - widthOffset, 1f - heightOffset, frontEnd, 14f/16f, 4f/16f); //lr
 			tessellator.addVertexWithUV(0.5f + widthOffset, 1f - heightOffset, frontEnd, 14f/16f, 3f/16f); //rr
 			tessellator.addVertexWithUV(0.5f + widthOffset, 1f - heightOffset, backEnd,  2f/16f,  3f/16f); //rf
@@ -143,7 +143,7 @@ public class PortalControllerRenderer extends TileEntitySpecialRenderer implemen
 			tessellator.addVertexWithUV(0.5f + widthOffset, 1f - heightOffset, frontEnd, 14f/16f, 11f/16f); //front top
 			//right side
 			tessellator.setNormal(1f,0f,0f);
-			tessellator.addVertexWithUV(0.5f - widthOffset, 0f + heightOffset, backEnd,  2f/16f, 3f/16f);   //rear bottom
+			tessellator.addVertexWithUV(0.5f - widthOffset, 0f + heightOffset, backEnd,  2f/16f,  3f/16f);   //rear bottom
 			tessellator.addVertexWithUV(0.5f - widthOffset, 0f + heightOffset, frontEnd, 2f/16f,  11f/16f); //front bottom
 			tessellator.addVertexWithUV(0.5f - widthOffset, 1f - heightOffset, frontEnd, 14f/16f, 11f/16f); //front top
 			tessellator.addVertexWithUV(0.5f - widthOffset, 1f - heightOffset, backEnd,  14f/16f, 3f/16f);  //rear top
@@ -184,7 +184,7 @@ public class PortalControllerRenderer extends TileEntitySpecialRenderer implemen
 		GL11.glRotatef(te.getXRotation(), 1f, 0f, 0f);
 		GL11.glTranslated(translation.xCoord * -1d, translation.yCoord * -1d, translation.zCoord * -1d);
 		
-		drawController(te.getStackInSlot(0) != null);
+		drawController(te.isCardPresent());
 		
 		GL11.glPopMatrix();
 	}

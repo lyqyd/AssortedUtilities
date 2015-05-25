@@ -41,6 +41,7 @@ public class PortalLocationItem extends Item {
 				tag.setDouble("x", player.posX);
 				tag.setDouble("y", player.posY);
 				tag.setDouble("z", player.posZ);
+				tag.setFloat("yaw", player.rotationYaw);
 				card.stackTagCompound = tag;
 				AULog.debug("Card created with attributes %f %f %f in dim %d", player.posX, player.posY, player.posZ, player.worldObj.provider.dimensionId);
 				EntityItem dropItem = new EntityItem(world, player.posX, player.posY, player.posZ, card);

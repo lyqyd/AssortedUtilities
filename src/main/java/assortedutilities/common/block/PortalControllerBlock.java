@@ -23,7 +23,7 @@ public class PortalControllerBlock extends BlockContainer {
 	
 	public IIcon[] icons = new IIcon[6];
 	
-	//DUNSWE 
+	//DUNSWE --or is it?  May be UDSNEW
 	public final int[][] rotationMatrix = {
 			{1,0,2,3,4,5},
 			{0,1,2,3,4,5},
@@ -58,7 +58,7 @@ public class PortalControllerBlock extends BlockContainer {
 	
 	@Override
 	public IIcon getIcon(int side, int meta) {
-		return this.icons[this.rotationMatrix[meta][side]];
+		return this.icons[this.rotationMatrix[meta & 7][side]];
 	}
 	
 	@Override
@@ -103,7 +103,7 @@ public class PortalControllerBlock extends BlockContainer {
 			case 5: mx--; break;
 		}
 	    
-		return (this.rotationMatrix[world.getBlockMetadata(mx, my, mz)][side] == 1);
+		return (this.rotationMatrix[world.getBlockMetadata(mx, my, mz) & 7][side] == 1);
 	}
 	
 	@Override
@@ -113,15 +113,15 @@ public class PortalControllerBlock extends BlockContainer {
 	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess world, int x, int y, int z) {
-		int meta = world.getBlockMetadata(x, y, z);
+		int meta = world.getBlockMetadata(x, y, z) & 7;
 		
 		float[][] bounds = {
-			{0f, 0f, 0f, 1f, 0.7f, 1f},
-			{0f, 0.3f, 0f, 1f, 1f, 1f},
-			{0f, 0f, 0f, 1f, 1f, 0.7f},
-			{0f, 0f, 0.3f, 1f, 1f, 1f},
-			{0f, 0f, 0f, 0.7f, 1f, 1f},
-			{0.3f, 0f, 0f, 1f, 1f, 1f},
+			{0f, 0f, 0f, 1f, 0.45f, 1f},
+			{0f, 0.55f, 0f, 1f, 1f, 1f},
+			{0f, 0f, 0f, 1f, 1f, 0.45f},
+			{0f, 0f, 0.55f, 1f, 1f, 1f},
+			{0f, 0f, 0f, 0.45f, 1f, 1f},
+			{0.55f, 0f, 0f, 1f, 1f, 1f},
 		};
 		
 		this.setBlockBounds(bounds[meta][0], bounds[meta][1], bounds[meta][2], bounds[meta][3], bounds[meta][4], bounds[meta][5]);
