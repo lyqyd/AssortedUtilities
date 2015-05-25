@@ -11,6 +11,7 @@ import assortedutilities.common.block.PortalFrameBlock;
 import assortedutilities.common.item.PortalLocationItem;
 import assortedutilities.common.util.AULog;
 import net.minecraft.block.Block;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryBasic;
@@ -427,29 +428,43 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 		}
 	}
 
-	public void onBreak() {
+	public void onBreak(int meta) {
 		if (!worldObj.isRemote) {
 			ChunkCoordinates start = null;
 			if (!ring.isEmpty()) {
-				ChunkCoordinates[] frameNeighbors = getFrameNeighbors(this.worldObj, this.xCoord, this.yCoord, this.zCoord);
-				for (int i = 0; i < frameNeighbors.length; i++) {
-					if (frameNeighbors[i] != null) {
-						start = frameNeighbors[i];
-						break;
-					}
+				if (portalLit) {
+					extinguishPortal();
 				}
+				int[][] translation = {
+						{0, -1, 0},
+						{0, 1, 0},
+						{0, 0, -1},
+						{0, 0, 1},
+						{-1, 0, 0},
+						{1, 0, 0},
+				};
+				meta = meta & 7;
+				start = new ChunkCoordinates(this.xCoord + translation[meta][0], this.yCoord + translation[meta][1], this.zCoord + translation[meta][2]);
 			}
 			if (start != null) {
 				AULog.debug("Got a starting point");
 				ArrayList<PortalControllerTile> controllers = findPortalControllers(worldObj, start.posX, start.posY, start.posZ);
 				AULog.debug("Controllers size was %d", controllers.size());
 				if (controllers.size() == 0) {
-					extinguishPortal();
 					extinguishRing();
 				}
 			}
 		}
 	}
+	
+	public void dropAll() {
+	    if (!worldObj.isRemote && this.getStackInSlot(0) != null) {
+		    ItemStack drop = this.decrStackSize(0, this.getStackInSlot(0).stackSize);
+		    EntityItem dropItem = new EntityItem(worldObj, this.xCoord, this.yCoord + 0.2f, this.zCoord, drop);
+		    dropItem.delayBeforeCanPickup = 10;
+		    worldObj.spawnEntityInWorld(dropItem);
+	    }
+   }
 
 	@Override
 	public int getSizeInventory() {
@@ -463,7 +478,7 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 
 	@Override
 	public ItemStack decrStackSize(int slot, int quantity) {
-		AULog.info("Setting flag for portal update.");
+		AULog.debug("Setting flag for portal update.");
 		this.updatePortal = true;
 		this.updateCard  = true;
 		this.markDirty();

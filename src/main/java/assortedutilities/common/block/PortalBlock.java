@@ -4,12 +4,15 @@ import assortedutilities.common.tileentity.PortalControllerTile;
 import assortedutilities.common.tileentity.PortalTile;
 import assortedutilities.common.util.AULog;
 import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
@@ -24,6 +27,7 @@ public class PortalBlock extends BlockContainer {
 	public PortalBlock() {
 		super(Material.portal);
 		setHardness(-1.0F);
+		setLightLevel(0.75F);
 		GameRegistry.registerBlock(this, "portal");
 		GameRegistry.registerTileEntity(PortalTile.class, "portal");
 		setBlockName("assortedutilities.portal");
@@ -76,11 +80,41 @@ public class PortalBlock extends BlockContainer {
 	}
 	
 	@Override
-	public AxisAlignedBB getCollisionBoundingBoxFromPool(World p_149668_1_, int p_149668_2_, int p_149668_3_, int p_149668_4_)
-    {
+	public boolean shouldSideBeRendered(IBlockAccess world, int x, int y, int z, int side) {
+
+		int mx=x, my=y, mz=z;
+	    switch(side) {
+		    case 0: my++; break;
+		    case 1: my--; break;
+  			case 2: mz++; break;
+			case 3: mz--; break;
+			case 4: mx++; break;
+			case 5: mx--; break;
+		}
+	    
+	    boolean[][] renderSide = {
+	    		{false, false, false, false, false, false},
+	    		{false, false, false, false, true, true},
+	    		{true, true, false, false, false, false},
+	    		{false, false, true, true, false, false}
+	    };
+	    
+	    int meta = world.getBlockMetadata(mx, my, mz);
+	    
+		return renderSide[meta][side];
+	}
+	
+	public AxisAlignedBB getCollisionBoundingBoxFromPool(World p_149668_1_, int p_149668_2_, int p_149668_3_, int p_149668_4_) {
         return null;
     }
 
-	
+	@SideOnly(Side.CLIENT)
+    public int getRenderBlockPass() {
+        return 1;
+    }
 
+	@SideOnly(Side.CLIENT)
+    public Item getItem(World world, int x, int y, int z) {
+        return Item.getItemById(0);
+    }
 }

@@ -85,7 +85,8 @@ public class PortalControllerBlock extends BlockContainer {
 		TileEntity tile = world.getTileEntity(x, y, z);
 		if (tile instanceof PortalControllerTile) {
 			PortalControllerTile controller = (PortalControllerTile) tile;
-			controller.onBreak();
+			controller.dropAll();
+			controller.onBreak(meta);
 		}
 		super.breakBlock(world, x, y, z, block, meta);
 	}
