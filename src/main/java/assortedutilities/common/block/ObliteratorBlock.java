@@ -2,6 +2,7 @@ package assortedutilities.common.block;
 
 import assortedutilities.client.renderer.ObliteratorRenderer;
 import assortedutilities.common.tileentity.ObliteratorTile;
+import assortedutilities.common.util.AULog;
 import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
@@ -14,6 +15,8 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIcon;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -59,7 +62,12 @@ public class ObliteratorBlock extends BlockContainer {
 	
 	@Override
 	public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase entity, ItemStack itemStack) {
+		Vec3 posVec = Vec3.createVectorHelper(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ);
+		Vec3 lookVec = entity.getLookVec();
+		MovingObjectPosition mop = world.rayTraceBlocks(posVec, lookVec);
+		int dir = mop.sideHit; //btewns 0 - 5
 		int direction = BlockPistonBase.determineOrientation(world, x, y, z, entity);
+		AULog.info("RT: %d, PO: %d", dir, direction);
 		world.setBlockMetadataWithNotify(x, y, z, direction, 2);
 	}
 

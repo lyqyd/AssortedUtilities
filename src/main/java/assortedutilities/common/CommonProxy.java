@@ -14,11 +14,14 @@ import assortedutilities.common.block.ObliteratorBlock;
 import assortedutilities.common.block.PortalBlock;
 import assortedutilities.common.block.PortalControllerBlock;
 import assortedutilities.common.block.PortalFrameBlock;
+import assortedutilities.common.item.PortalControllerItem;
+import assortedutilities.common.item.PortalLocationItem;
 import assortedutilities.common.util.AULog;
 
 public class CommonProxy {
 	
 	public void preInit() {
+		registerItems();
 		registerBlocks();
 	}
 	
@@ -31,6 +34,17 @@ public class CommonProxy {
 		
 	}
 	
+	private void registerItems() {
+		int count = 0;
+		if (true) {
+			AssortedUtilities.Items.locationCard = new PortalLocationItem();
+			GameRegistry.registerItem(AssortedUtilities.Items.locationCard, "locationCard", "assortedutilities");
+			count++;
+		}
+		
+		AULog.debug("Registered %d items.", count);
+	}
+	
 	private void registerBlocks() {
 		int count = 0;
 		if (AssortedUtilities.Config.obliteratorEnabled) {
@@ -41,6 +55,7 @@ public class CommonProxy {
 			AssortedUtilities.Blocks.portalFrameBlock = new PortalFrameBlock();
 			count++;
 			AssortedUtilities.Blocks.portalControllerBlock = new PortalControllerBlock();
+			GameRegistry.registerBlock(AssortedUtilities.Blocks.portalControllerBlock, PortalControllerItem.class, "portalController");
 			count++;
 			AssortedUtilities.Blocks.portalBlock = new PortalBlock();
 			count++;
@@ -62,6 +77,13 @@ public class CommonProxy {
 					'o', obsidian, 'c', cobblestone, 'l', bucket);
 			count++;
 		}
+		
+		if (true) {
+			ItemStack locationCard = new ItemStack(AssortedUtilities.Items.locationCard, 1);
+			GameRegistry.addShapelessRecipe(locationCard, new Object[] {locationCard});
+			count++;
+		}
+		
 		AULog.debug("Registered %d recipes.", count);
 	}
 	

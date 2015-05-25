@@ -1,105 +1,86 @@
 package assortedutilities.common.block;
 
+import assortedutilities.common.tileentity.PortalControllerTile;
+import assortedutilities.common.tileentity.PortalTile;
+import assortedutilities.common.util.AULog;
 import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
-public class PortalBlock extends Block {
+public class PortalBlock extends BlockContainer {
 	
 	public PortalBlock() {
 		super(Material.portal);
 		setHardness(-1.0F);
 		GameRegistry.registerBlock(this, "portal");
+		GameRegistry.registerTileEntity(PortalTile.class, "portal");
 		setBlockName("assortedutilities.portal");
 		this.setBlockTextureName("assortedutilities:portal");
 	}
 	
 	@Override
+	public TileEntity createNewTileEntity(World p_149915_1_, int p_149915_2_) {
+		return new PortalTile();
+	}
+	
+	public void onEntityCollidedWithBlock(World world, int x, int y, int z, Entity entity) {
+		TileEntity tile = world.getTileEntity(x, y, z);
+		if (tile instanceof PortalTile) {
+			((PortalTile)tile).onCollide(entity);
+		}
+	}
+	
+	@Override
+	public boolean isOpaqueCube() {
+		return false;
+	}
+	
+	@Override
+	public boolean renderAsNormalBlock() {
+        return false;
+    }
+	
+	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess world, int x, int y, int z) {
 		int meta = world.getBlockMetadata(x, y, z);
 		
-		if (meta == 0) {
-			if (world.getBlock(x - 1, y, z) != this && world.getBlock(x + 1, y, z) != this) {
-				//yz
-				meta = 1;
-			} else if (world.getBlock(x, y - 1, z) != this && world.getBlock(x, y + 1, z) != this) {
-				//xz
-				meta = 2;
-			} else if (world.getBlock(x, y, z - 1) != this && world.getBlock(x, y, z + 1) != this) {
-				//xy
-				meta = 3;
-			}
-			
-			if (world instanceof World && !((World)world).isRemote) {
-            	//fix metadata on block.
-                ((World)world).setBlockMetadataWithNotify(x, y, z, meta, 2);
-            }
-		}
-		
-		float xAdj = 0.125f;
-		float yAdj = 0.125f;
-		float zAdj = 0.125f;
+		float xAdj = 0.5f;
+		float yAdj = 0.5f;
+		float zAdj = 0.5f;
 		
 		switch(meta) {
 			case 1:
-				yAdj = 0.5f;
-				zAdj = 0.5f;
+				xAdj = 0.125f;
 				break;
 			case 2:
-				xAdj = 0.5f;
-				zAdj = 0.5f;
+				yAdj = 0.125f;
 				break;
 			case 3:
-				xAdj = 0.5f;
-				yAdj = 0.5f;
+				zAdj = 0.125f;
 				break;
 		}
 		
 		this.setBlockBounds(0.5f - xAdj, 0.5f - yAdj, 0.5f - zAdj, 0.5f + xAdj, 0.5f + yAdj, 0.5f + zAdj);
 	}
 	
-	public void OldsetBlockBoundsBasedOnState(IBlockAccess world, int x, int y, int z)
+	@Override
+	public AxisAlignedBB getCollisionBoundingBoxFromPool(World p_149668_1_, int p_149668_2_, int p_149668_3_, int p_149668_4_)
     {
-		//mask off to get only 1 or 2 as state.
-        int l = world.getBlockMetadata(x, y, z) & 3;
-
-        if (l == 0)
-        {
-            if (world.getBlock(x - 1, y, z) != this && world.getBlock(x + 1, y, z) != this)
-            {
-            	//portal is z-axis oriented.
-                l = 2;
-            }
-            else
-            {
-            	//portal is x-axis oriented.
-                l = 1;
-            }
-
-            if (world instanceof World && !((World)world).isRemote)
-            {
-            	//fix metadata on block.
-                ((World)world).setBlockMetadataWithNotify(x, y, z, l, 2);
-            }
-        }
-
-        float f = 0.125F;
-        float f1 = 0.125F;
-
-        if (l == 1)
-        {
-            f = 0.5F;
-        }
-
-        if (l == 2)
-        {
-            f1 = 0.5F;
-        }
-
-        this.setBlockBounds(0.5F - f, 0.0F, 0.5F - f1, 0.5F + f, 1.0F, 0.5F + f1);
+        return null;
     }
+
+	
 
 }

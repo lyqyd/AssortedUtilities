@@ -11,6 +11,7 @@ import assortedutilities.common.block.PortalBlock;
 import assortedutilities.common.block.PortalControllerBlock;
 import assortedutilities.common.block.PortalFrameBlock;
 import assortedutilities.common.block.ObliteratorBlock;
+import assortedutilities.common.item.PortalLocationItem;
 import assortedutilities.common.util.AULog;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
@@ -21,6 +22,10 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
 @Mod(modid = "AssortedUtilities", name = "Assorted Utilities", version = "0.0.1")
 public class AssortedUtilities {
+	
+	public static class Items {
+		public static PortalLocationItem locationCard;
+	}
 
 	public static class Blocks {
 		public static ObliteratorBlock obliteratorBlock;

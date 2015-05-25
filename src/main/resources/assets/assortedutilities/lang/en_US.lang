@@ -1,1 +1,5 @@
 tile.assortedutilities.obliterator.name=Obliterator
+
+tile.assortedutilities.portalFrame.name=Portal Frame
+tile.assortedutilities.portalController.name=Portal Controller
+item.assortedutilities.locationCard.name=Location Card

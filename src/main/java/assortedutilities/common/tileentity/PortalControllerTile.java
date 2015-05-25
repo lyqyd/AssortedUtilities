@@ -3,37 +3,137 @@ package assortedutilities.common.tileentity;
 import java.util.ArrayList;
 import java.util.Stack;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import assortedutilities.AssortedUtilities;
 import assortedutilities.common.block.PortalControllerBlock;
 import assortedutilities.common.block.PortalFrameBlock;
+import assortedutilities.common.item.PortalLocationItem;
 import assortedutilities.common.util.AULog;
 import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryBasic;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.Packet;
+import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
-public class PortalControllerTile extends TileEntity {
+public class PortalControllerTile extends TileEntity implements IInventory {
 	
 	private ArrayList<ChunkCoordinates> ring = new ArrayList<ChunkCoordinates>();
 	private ArrayList<ChunkCoordinates> interior = new ArrayList<ChunkCoordinates>();
+	private IInventory inventory;
+	private boolean updateFrame = true;
+	private boolean updatePortal = true;
+	private boolean portalLit = false;
+	private int portalPlane = 0;
+	
+	public PortalControllerTile() {
+		super();
+		this.inventory = new InventoryBasic("Controller", true, 1);
+	}
 	
 	@Override
 	public void updateEntity() {
+		super.updateEntity();
+		if (!worldObj.isRemote) {
+			if (updateFrame) {
+				AULog.debug("Updating frame state");
+				validateRing();
+				updateFrame = false;
+				updatePortal = true;
+			}
+			if (updatePortal) {
+				AULog.debug("Updating portal state");
+				ItemStack stack = inventory.getStackInSlot(0);
+				if (stack != null && stack.hasTagCompound()) {
+					int meta = 0;
+					switch (portalPlane) {
+					case 3:
+						meta = 1; break;
+					case 5:
+						meta = 3; break;
+					case 6:
+						meta = 2; break;
+					}
+					if (meta > 0) {
+						int dim = stack.stackTagCompound.getInteger("dim");
+						double x = stack.stackTagCompound.getDouble("x"), y = stack.stackTagCompound.getDouble("y"), z = stack.stackTagCompound.getDouble("z");
+						if (portalSpaceClear()) {
+							lightPortal(meta, x, y, z, dim);
+						}
+					}
+				} else if (portalLit) {
+					extinguishPortal();
+				}
+				updatePortal = false;
+			}
+		}
 		
+	}
+
+	public boolean onActivate(EntityPlayer player) {
+		ItemStack heldStack = player.getCurrentEquippedItem();
+		if (inventory.getStackInSlot(0) != null && heldStack == null) {
+			//drop card to player
+			player.setCurrentItemOrArmor(0, this.decrStackSize(0, 1));
+		} else if (heldStack != null && heldStack.getItem() instanceof PortalLocationItem && heldStack.stackSize == 1) {
+			//our inventory is empty and they have a card for us!
+			this.setInventorySlotContents(0, heldStack.copy());
+			heldStack.stackSize = 0;
+		} else {
+			return false;
+		}
+		return true;
 	}
 	
 	public void readFromNBT(NBTTagCompound tag) {
 		super.readFromNBT(tag);
-		
-		if (!worldObj.isRemote) {
-			if (validateRing()) {
-				lightRing(ring);
-			}
-		}
+		NBTTagCompound item = tag.getCompoundTag("item");
+		inventory.setInventorySlotContents(0, ItemStack.loadItemStackFromNBT(item));
+		this.markDirty();
 	}
 	
 	public void writeToNBT(NBTTagCompound tag) {
 		super.writeToNBT(tag);
+		NBTTagCompound item = new NBTTagCompound();
+		ItemStack stack = inventory.getStackInSlot(0);
+		if (stack != null) {
+			stack.writeToNBT(item);
+		}
+		tag.setTag("item", item);
+	}
+	
+	public Vec3 getTranslation() {
+		int meta = worldObj.getBlockMetadata(xCoord, yCoord, zCoord);
+		switch (meta) {
+			case 0:
+			case 1:
+				return Vec3.createVectorHelper(0, .5d, .5d);
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				return Vec3.createVectorHelper(.5d, 0, .5d);
+			default:
+				return null;
+		}
+	}
+	
+	public float getYRotation() {
+		float[] rotation = {0,0,180,0,270,90};
+		return rotation[worldObj.getBlockMetadata(xCoord, yCoord, zCoord)];
+	}
+	
+	public float getXRotation() {
+		float[] rotation = {90,270,0,0,0,0};
+		return rotation[worldObj.getBlockMetadata(xCoord, yCoord, zCoord)];
 	}
 	
 	private boolean validateRing() {
@@ -53,27 +153,57 @@ public class PortalControllerTile extends TileEntity {
 				ring = result;
 				interior = findInteriorBlocks(ring);
 				AULog.debug("Ring formed with %d frame blocks and %d interior blocks", ring.size(), interior.size());
+				lightRing();
 				return true;
 			}
 		}
 		if (ring != null && !ring.isEmpty()) {
-			extinguishRing(ring);
+			extinguishRing();
 			ring = new ArrayList<ChunkCoordinates>();
 			interior = new ArrayList<ChunkCoordinates>();
 		}
 		return false;
 	}
 	
-	private void lightRing(ArrayList<ChunkCoordinates> locations) {
-		for (ChunkCoordinates location : locations) {
+	private boolean portalSpaceClear() {
+		for (ChunkCoordinates location : this.interior){
+			if (!worldObj.isAirBlock(location.posX, location.posY, location.posZ)){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private void lightRing() {
+		for (ChunkCoordinates location : this.ring) {
 			worldObj.setBlockMetadataWithNotify(location.posX, location.posY, location.posZ, 1, 3);
 		}
 	}
 	
-	private void extinguishRing(ArrayList<ChunkCoordinates> locations) {
-		for (ChunkCoordinates location : locations) {
+	private void extinguishRing() {
+		for (ChunkCoordinates location : this.ring) {
 			worldObj.setBlockMetadataWithNotify(location.posX, location.posY, location.posZ, 0, 3);
 		}
+	}
+	
+	private void lightPortal(int meta, double x, double y, double z, int dim) {
+		AULog.debug("Setting up portal blocks");
+		for (ChunkCoordinates portal : this.interior) {
+			worldObj.setBlock(portal.posX, portal.posY, portal.posZ, AssortedUtilities.Blocks.portalBlock, meta, 3);
+			TileEntity tile = worldObj.getTileEntity(portal.posX, portal.posY, portal.posZ);
+			if (tile instanceof PortalTile) {
+				((PortalTile)tile).setDestination(x, y, z, dim);
+			}
+		}
+		portalLit = true;
+	}
+	
+	private void extinguishPortal() {
+		AULog.debug("Destroying portal blocks");
+		for (ChunkCoordinates portal : this.interior) {
+			worldObj.setBlockToAir(portal.posX, portal.posY, portal.posZ);
+		}
+		portalLit = false;
 	}
 	
 	private ChunkCoordinates[] getFrameNeighbors(World world, int x, int y, int z) {
@@ -225,6 +355,7 @@ public class PortalControllerTile extends TileEntity {
 			}
 		}
 		if (result.size() > 4) {
+			portalPlane = axisFlag;
 			return result;
 		} else {
 			return null;
@@ -265,30 +396,23 @@ public class PortalControllerTile extends TileEntity {
 
 	public void blockAdded() {
 		if (!worldObj.isRemote) {
-			if (validateRing()) {
-				lightRing(ring);
-			}
+			updateFrame = true;
 		}
 	}
 	
 	public void blockRemoved() {
 		if (!worldObj.isRemote) {
-			if (validateRing()) {
-				lightRing(ring);
-			}
+			updateFrame = true;
 		}
 	}
 
 	public void onPlacement() {
 		if (!worldObj.isRemote) {
-			if (validateRing()) {
-				lightRing(ring);
-			}
+			updateFrame = true;
 		}
 	}
 
 	public void onBreak() {
-		AULog.info("On break!");
 		if (!worldObj.isRemote) {
 			ChunkCoordinates start = null;
 			if (!ring.isEmpty()) {
@@ -305,10 +429,94 @@ public class PortalControllerTile extends TileEntity {
 				ArrayList<PortalControllerTile> controllers = findPortalControllers(worldObj, start.posX, start.posY, start.posZ);
 				AULog.debug("Controllers size was %d", controllers.size());
 				if (controllers.size() == 0) {
-					extinguishRing(ring);
+					extinguishPortal();
+					extinguishRing();
 				}
 			}
 		}
+	}
+
+	@Override
+	public int getSizeInventory() {
+		return inventory.getSizeInventory();
+	}
+
+	@Override
+	public ItemStack getStackInSlot(int slot) {
+		return inventory.getStackInSlot(slot);
+	}
+
+	@Override
+	public ItemStack decrStackSize(int slot, int quantity) {
+		AULog.info("Setting flag for portal update.");
+		this.updatePortal = true;
+		this.markDirty();
+		return inventory.decrStackSize(slot, quantity);
+	}
+
+	@Override
+	public ItemStack getStackInSlotOnClosing(int slot) {
+		return inventory.getStackInSlotOnClosing(slot);
+	}
+
+	@Override
+	public void setInventorySlotContents(int slot, ItemStack stack) {
+		if (isItemValidForSlot(slot, stack)) {
+			inventory.setInventorySlotContents(slot, stack);
+		}
+		this.markDirty();
+		AULog.info("Setting flag for portal update.");
+		this.updatePortal = true;
+	}
+
+	@Override
+	public String getInventoryName() {
+		return inventory.getInventoryName();
+	}
+
+	@Override
+	public boolean hasCustomInventoryName() {
+		return inventory.hasCustomInventoryName();
+	}
+
+	@Override
+	public int getInventoryStackLimit() {
+		return 1;
+	}
+
+	@Override
+	public boolean isUseableByPlayer(EntityPlayer player) {
+		return false;
+	}
+
+	@Override
+	public void openInventory() {}
+
+	@Override
+	public void closeInventory() {}
+
+	@Override
+	public boolean isItemValidForSlot(int slot, ItemStack stack) {
+		if (stack == null || (slot == 0 && stack.getItem() instanceof PortalLocationItem && stack.stackSize <= 1)) {
+			return true;
+		}
+		return false;
+	}
+	
+	@Override
+	@SideOnly(Side.SERVER)
+	public Packet getDescriptionPacket()
+	{
+	 NBTTagCompound tag = new NBTTagCompound();
+	 this.writeToNBT(tag);
+	 return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, 1, tag);
+	}
+		
+	@Override
+	@SideOnly(Side.CLIENT)
+	public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity packet)
+	{
+	 readFromNBT(packet.func_148857_g());
 	}
 	
 }
