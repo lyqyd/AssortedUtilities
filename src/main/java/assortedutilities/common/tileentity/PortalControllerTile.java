@@ -93,7 +93,7 @@ public class PortalControllerTile extends TileEntity implements IInventory {
 		if (inventory.getStackInSlot(0) != null && heldStack == null) {
 			//drop card to player
 			player.setCurrentItemOrArmor(0, this.decrStackSize(0, 1));
-		} else if (heldStack != null && heldStack.getItem() instanceof PortalLocationItem && heldStack.stackSize == 1) {
+		} else if (inventory.getStackInSlot(0) == null && heldStack != null && heldStack.getItem() instanceof PortalLocationItem && heldStack.stackSize == 1) {
 			//our inventory is empty and they have a card for us!
 			this.setInventorySlotContents(0, heldStack.copy());
 			heldStack.stackSize = 0;
