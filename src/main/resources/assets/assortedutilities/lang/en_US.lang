@@ -4,3 +4,6 @@ tile.assortedutilities.portal.name=Portal
 tile.assortedutilities.portalFrame.name=Portal Frame
 tile.assortedutilities.portalController.name=Portal Controller
 item.assortedutilities.locationCard.name=Location Card
+
+tile.assortedutilities.advflightblock.name=Flight Block
+tile.assortedutilities.bscflightblock.name=Basic Flight Block
