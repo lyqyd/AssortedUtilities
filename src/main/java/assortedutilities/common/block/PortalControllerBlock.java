@@ -113,6 +113,11 @@ public class PortalControllerBlock extends BlockContainer {
 	}
 	
 	@Override
+	public boolean renderAsNormalBlock() {
+		return false;
+	}
+	
+	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess world, int x, int y, int z) {
 		int meta = world.getBlockMetadata(x, y, z) & 7;
 		
