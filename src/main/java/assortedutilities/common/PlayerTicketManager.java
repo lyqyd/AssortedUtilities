@@ -9,14 +9,18 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ChunkCoordinates;
 
 public class PlayerTicketManager {
-	
+
 	private ArrayList<FlightTicket> ticketList = new ArrayList<FlightTicket>();
 	private EntityPlayerMP player;
-	
+
 	public PlayerTicketManager (EntityPlayerMP player) {
 		this.player = player;
 	}
-	
+
+	public void updatePlayerInstance(EntityPlayerMP player) {
+		this.player = player;
+	}
+
 	public void update() {
 		AULog.debug("Update for player %s: %d/%d, %b", this.player.getDisplayName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
 		if (this.getFlightTicketCount() > 0 && !this.player.capabilities.allowFlying) {
@@ -61,7 +65,7 @@ public class PlayerTicketManager {
 		}
 		this.update();
 	}
-	
+
 	public void removeTicket(FlightTicket ticket) {
 		for (FlightTicket t : this.ticketList) {
 			if (t == ticket) {
@@ -72,29 +76,29 @@ public class PlayerTicketManager {
 		}
 		this.update();
 	}
-	
+
 	private class FallingTickets<T> implements Predicate<FlightTicket> {
 		@Override
 		public boolean test(FlightTicket t) {
 			return t.isFalling();
 		}
 	}
-	
+
 	protected void removeFallingModeTickets() {
 		this.removeFallingModeTickets(true);
 	}
-	
+
 	private void removeFallingModeTickets(boolean update) {
 		ticketList.removeIf(new FallingTickets<FlightTicket>());
 		if (update) {
 			this.update();
 		}
 	}
-	
+
 	public int getTicketCount() {
 		return ticketList.size();
 	}
-	
+
 	public int getFlightTicketCount() {
 		int count = 0;
 		for (FlightTicket t : this.ticketList) {

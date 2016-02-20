@@ -61,7 +61,14 @@ public class ServerTicketManager implements IPlayerPresenceHandler, IFallDamageH
 
 	@Override
 	public void onWorldChange(EntityJoinWorldEvent event) {
-		// TODO Auto-generated method stub	
+		if (event.entity instanceof EntityPlayerMP) {
+			EntityPlayerMP player = (EntityPlayerMP) event.entity;
+			String id = player.getUniqueID().toString();
+			PlayerTicketManager manager = ticketManagers.get(id);
+			if (manager != null) {
+				manager.updatePlayerInstance(player);
+			}
+		}
 	}
 
 	@Override
