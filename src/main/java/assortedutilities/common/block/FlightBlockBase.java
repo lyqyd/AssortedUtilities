@@ -54,9 +54,10 @@ public abstract class FlightBlockBase extends BlockContainer {
 	@Override
 	public ArrayList<ItemStack> getDrops(World world, int x, int y, int z, int metadata, int fortune) {
 		ArrayList<ItemStack> drops = new ArrayList<ItemStack>();
+		AULog.debug("Getting drops; silk required: %b, metadata: %d", this.requiresSilkTouch, metadata);
 		if (this.requiresSilkTouch && metadata == 1) {
 			if (this.drop != null) {
-				drops.add(this.drop);
+				drops.add(this.drop.copy());
 			}
 		} else {
 			drops.add(new ItemStack(Item.getItemFromBlock(this), 1));
