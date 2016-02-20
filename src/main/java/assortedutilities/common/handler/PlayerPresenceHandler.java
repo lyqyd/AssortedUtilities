@@ -65,4 +65,12 @@ public class PlayerPresenceHandler {
 			}
 		}
 	}
+	
+	public void removeListener(IPlayerPresenceHandler listener) {
+		synchronized(listeners) {
+			if (listeners.contains(listener)) {
+				listeners.remove(listener);
+			}
+		}
+	}
 }

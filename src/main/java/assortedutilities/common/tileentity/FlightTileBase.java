@@ -106,7 +106,10 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 	
 	@Override
 	public void invalidate() {
+		AULog.debug("Invalidating Flight Tile @ %d, %d, %d", this.xCoord, this.yCoord, this.zCoord);
 		this.dropAllFlyers();
+		PlayerPresenceHandler.instance.removeListener(this);
+		FallDamageHandler.instance.removeListener(this);
 		super.invalidate();
 	}
 	
