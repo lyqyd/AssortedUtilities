@@ -45,16 +45,16 @@ public class PlayerTicketManager {
 		boolean ticketExists = false;
 		for (FlightTicket t : this.ticketList) {
 			if (t.getLocation().compareTo(ticket.getLocation()) == 0) {
-				AULog.debug("Discarding old ticket from %s as duplicate",  ticket.getLocation().toString());
+				AULog.debug("Discarding old ticket %x from %s as duplicate", t.hashCode(), t.getLocation().toString());
 				ticketList.remove(t);
 				break;
 			}
 		}
 		ticketList.add(ticket);
-		AULog.debug("Adding ticket from %s", ticket.getLocation().toString());
+		AULog.debug("Adding ticket %x from %s", ticket.hashCode(), ticket.getLocation().toString());
 		this.update();
 	}
-	
+
 	public void removeTicket(ChunkCoordinates location) {
 		for (FlightTicket t : this.ticketList) {
 			if (t.getLocation().compareTo(location) == 0) {
