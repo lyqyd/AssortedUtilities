@@ -83,8 +83,10 @@ public class PortalTile extends TileEntity {
 	        
 	        AULog.debug("Setting new position: %f %f %f", x, y, z);
 	        entity.setPosition(x, y, z);
-	        if (entityMP != null) {entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, yaw, entity.rotationPitch);}
-	        entityMP.addExperienceLevel(0);
+	        if (entityMP != null) {
+	        	entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, yaw, entity.rotationPitch);
+	        	entityMP.addExperienceLevel(0);
+	        }
 	        worldserver1.updateEntityWithOptionalForce(entity, false);
 		}
 	}
