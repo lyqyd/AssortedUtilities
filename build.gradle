@@ -17,12 +17,12 @@ buildscript {
 
 apply plugin: 'forge'
 
-version = "0.0.4"
+version = "0.0.5"
 group= "assortedutilities" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "AssortedUtilities"
 
 minecraft {
-    version = "1.7.10-10.13.2.1230"
+    version = "1.7.10-10.13.4.1558-1.7.10"
     runDir = "eclipse"
 }
 

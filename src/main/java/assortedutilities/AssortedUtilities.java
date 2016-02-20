@@ -22,7 +22,7 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = "AssortedUtilities", name = "Assorted Utilities", version = "0.0.4")
+@Mod(modid = "AssortedUtilities", name = "Assorted Utilities", version = "0.0.5")
 public class AssortedUtilities {
 	
 	public static class Items {
@@ -118,10 +118,10 @@ public class AssortedUtilities {
 		prop = configFile.get("balance", "cheapRecipeAdvanced", false);
 		prop.comment = "Use a significantly cheaper crafting recipe for the Advanced Flight Blocks.";
 		Config.cheapRecipe = prop.getBoolean();
-		prop = configFile.get("general", "enableAdvanced", true);
+		prop = configFile.get("flight", "enableAdvanced", true);
 		prop.comment = "Enable Advanced Flight Blocks";
 		Config.enableAdvanced = prop.getBoolean();
-		prop = configFile.get("general", "enableAdvancedRecipe", true);
+		prop = configFile.get("flight", "enableAdvancedRecipe", true);
 		prop.comment = "Enable Advanced Flight Block Recipe";
 		Config.enableAdvancedRecipe = prop.getBoolean();
 		
@@ -135,10 +135,10 @@ public class AssortedUtilities {
 		prop = configFile.get("balance", "radiusBasic", 6);
 		prop.comment = "Distance in blocks for Basic Flight Blocks to enable flight";
 		Config.radiusBsc = prop.getInt();
-		prop = configFile.get("general", "enableBasic", true);
+		prop = configFile.get("flight", "enableBasic", true);
 		prop.comment = "Enable Basic Flight Blocks";
 		Config.enableBasic = prop.getBoolean();
-		prop = configFile.get("general", "enableBasicRecipe", true);
+		prop = configFile.get("flight", "enableBasicRecipe", true);
 		prop.comment = "Enable Basic Flight Block Recipe";
 		Config.enableBasicRecipe = prop.getBoolean();
 
