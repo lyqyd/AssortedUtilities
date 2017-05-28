@@ -2,8 +2,10 @@ package assortedutilities;
 
 import java.util.UUID;
 
+import assortedutilities.common.RegisterEventHandler;
 import com.mojang.authlib.GameProfile;
 
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import assortedutilities.common.CommonProxy;
@@ -15,15 +17,20 @@ import assortedutilities.common.block.PortalFrameBlock;
 import assortedutilities.common.block.ObliteratorBlock;
 import assortedutilities.common.item.PortalLocationItem;
 import assortedutilities.common.util.AULog;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.Mod.Instance;
-import cpw.mods.fml.common.SidedProxy;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.Mod.Instance;
+import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = "AssortedUtilities", name = "Assorted Utilities", version = "0.0.5")
+@Mod(modid = "assortedutilities", name = "Assorted Utilities", version = "0.0.6")
 public class AssortedUtilities {
+
+	public AssortedUtilities() {
+		AULog.init();
+		MinecraftForge.EVENT_BUS.register(new RegisterEventHandler());
+	}
 	
 	public static class Items {
 		public static PortalLocationItem locationCard;
@@ -39,23 +46,20 @@ public class AssortedUtilities {
 	}
 	
 	public static class Config {
-		public static boolean obliteratorEnabled;
 		public static boolean obliteratorRecipeEnabled;
-		public static boolean portalsEnabled;
+
 		public static boolean portalFrameRecipeEnabled;
 		public static boolean portalControllerRecipeEnabled;
 		public static boolean portalLocationCardRecipeEnabled;
 		public static boolean portalLocationCardResetRecipeEnabled;
 		
 		//wingless flight configuration options
-		public static boolean enableAdvanced;
 		public static boolean enableAdvancedRecipe;
 		public static boolean silkTouchRequiredAdv;
 		public static int chargeTimeAdv;
 		public static int radiusAdv;
 		public static boolean cheapRecipe;
-		
-		public static boolean enableBasic;
+
 		public static boolean enableBasicRecipe;
 		public static boolean silkTouchRequiredBsc;
 		public static int chargeTimeBsc;
@@ -73,73 +77,58 @@ public class AssortedUtilities {
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 		long time = System.nanoTime();
-		AULog.init();
 		AULog.debug("Starting pre-init");
 		
 		Configuration configFile = new Configuration(event.getSuggestedConfigurationFile());
 		
 		//obliterator config
-		Property prop = configFile.get("obliterator", "enableObliterator", true);
-		prop.comment = "Set to false to disable Obliterator blocks.";
-		Config.obliteratorEnabled = prop.getBoolean();
-		
-		prop = configFile.get("obliterator", "enableObliteratorRecipe", true);
-		prop.comment = "Set to false to disable the crafting recipe for Obliterator blocks.";
+		Property prop = configFile.get("obliterator", "enableObliteratorRecipe", true);
+		prop.setComment("Set to false to disable the crafting recipe for Obliterator blocks.");
 		Config.obliteratorRecipeEnabled = prop.getBoolean();
 		
 		//portal system config
-		prop = configFile.get("portal", "enablePortals", true);
-		prop.comment = "Set to false to disable the portal system (disables all portal system blocks/items).";
-		Config.portalsEnabled = prop.getBoolean();
-		
 		prop = configFile.get("portal", "enablePortalFrameRecipe", true);
-		prop.comment = "Set to false to disable the crafting recipe for Portal Frame blocks.";
+		prop.setComment("Set to false to disable the crafting recipe for Portal Frame blocks.");
 		Config.portalFrameRecipeEnabled = prop.getBoolean();
 		prop = configFile.get("portal", "enablePortalControllerRecipe", true);
-		prop.comment = "Set to false to disable the crafting recipe for Portal Controller blocks.";
+		prop.setComment("Set to false to disable the crafting recipe for Portal Controller blocks.");
 		Config.portalControllerRecipeEnabled = prop.getBoolean();
 		prop = configFile.get("portal", "enableLocationCardRecipe", true);
-		prop.comment = "Set to false to disable the crafting recipe for Location Card items.";
+		prop.setComment("Set to false to disable the crafting recipe for Location Card items.");
 		Config.portalLocationCardRecipeEnabled = prop.getBoolean();
 		prop = configFile.get("portal", "enableLocationCardResetRecipe", true);
-		prop.comment = "Set to false to disable the crafting recipe to reset Location Card items.";
+		prop.setComment("Set to false to disable the crafting recipe to reset Location Card items.");
 		Config.portalLocationCardResetRecipeEnabled = prop.getBoolean();
 		
 		//advanced flight blocks configuration
 		prop = configFile.get("balance", "silkTouchRequiredAdvanced", true);
-		prop.comment = "Advanced Flight Blocks require silk touch to pick up intact";
+		prop.setComment("Advanced Flight Blocks require silk touch to pick up intact");
 		Config.silkTouchRequiredAdv = prop.getBoolean();
 		prop = configFile.get("balance", "chargeTimeAdvanced", 10);
-		prop.comment = "Time Advanced Flight Blocks require to charge before working, in seconds";
+		prop.setComment("Time Advanced Flight Blocks require to charge before working, in seconds");
 		Config.chargeTimeAdv = prop.getInt();
 		prop = configFile.get("balance", "radiusAdvanced", 32);
-		prop.comment = "Distance in blocks for Advanced Flight Blocks to enable flight";
+		prop.setComment("Distance in blocks for Advanced Flight Blocks to enable flight");
 		Config.radiusAdv = prop.getInt();
 		prop = configFile.get("balance", "cheapRecipeAdvanced", false);
-		prop.comment = "Use a significantly cheaper crafting recipe for the Advanced Flight Blocks.";
+		prop.setComment("Use a significantly cheaper crafting recipe for the Advanced Flight Blocks.");
 		Config.cheapRecipe = prop.getBoolean();
-		prop = configFile.get("flight", "enableAdvanced", true);
-		prop.comment = "Enable Advanced Flight Blocks";
-		Config.enableAdvanced = prop.getBoolean();
 		prop = configFile.get("flight", "enableAdvancedRecipe", true);
-		prop.comment = "Enable Advanced Flight Block Recipe";
+		prop.setComment("Enable Advanced Flight Block Recipe");
 		Config.enableAdvancedRecipe = prop.getBoolean();
 		
 		//basic flight blocks configuration
 		prop = configFile.get("balance", "silkTouchRequiredBasic", false);
-		prop.comment = "Basic Flight Blocks require silk touch to pick up intact";
+		prop.setComment("Basic Flight Blocks require silk touch to pick up intact");
 		Config.silkTouchRequiredBsc = prop.getBoolean();
 		prop = configFile.get("balance", "chargeTimeBasic", 30);
-		prop.comment = "Time Basic Flight Blocks require to charge before working, in seconds";
+		prop.setComment("Time Basic Flight Blocks require to charge before working, in seconds");
 		Config.chargeTimeBsc = prop.getInt();
 		prop = configFile.get("balance", "radiusBasic", 6);
-		prop.comment = "Distance in blocks for Basic Flight Blocks to enable flight";
+		prop.setComment("Distance in blocks for Basic Flight Blocks to enable flight");
 		Config.radiusBsc = prop.getInt();
-		prop = configFile.get("flight", "enableBasic", true);
-		prop.comment = "Enable Basic Flight Blocks";
-		Config.enableBasic = prop.getBoolean();
 		prop = configFile.get("flight", "enableBasicRecipe", true);
-		prop.comment = "Enable Basic Flight Block Recipe";
+		prop.setComment("Enable Basic Flight Block Recipe");
 		Config.enableBasicRecipe = prop.getBoolean();
 
 		configFile.save();

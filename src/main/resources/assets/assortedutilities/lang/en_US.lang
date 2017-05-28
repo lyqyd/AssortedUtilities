@@ -1,9 +1,9 @@
-tile.assortedutilities.obliterator.name=Obliterator
+tile.obliterator.name=Obliterator
 
-tile.assortedutilities.portal.name=Portal
-tile.assortedutilities.portalFrame.name=Portal Frame
-tile.assortedutilities.portalController.name=Portal Controller
-item.assortedutilities.locationCard.name=Location Card
+tile.portal.name=Portal
+tile.portal-frame.name=Portal Frame
+tile.portal-controller.name=Portal Controller
+item.portal-location-item.name=Location Card
 
-tile.assortedutilities.advflightblock.name=Flight Block
-tile.assortedutilities.bscflightblock.name=Basic Flight Block
+tile.flight-block-advanced.name=Flight Block
+tile.flight-block-basic.name=Basic Flight Block

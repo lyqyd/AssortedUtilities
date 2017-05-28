@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": { "model": "assortedutilities:obliterator", "x": 90 },
+    "facing=up": { "model": "assortedutilities:obliterator", "x": 270 },
+    "facing=north": { "model": "assortedutilities:obliterator" },
+    "facing=south": { "model": "assortedutilities:obliterator", "y": 180 },
+    "facing=west": { "model": "assortedutilities:obliterator", "y": 270 },
+    "facing=east": { "model": "assortedutilities:obliterator", "y": 90 }
+  }
+}

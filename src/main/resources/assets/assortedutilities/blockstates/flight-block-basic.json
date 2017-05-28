@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "active=true": { "model": "assortedutilities:flight-block-basic" },
+    "active=false": { "model": "assortedutilities:flight-block-basic" }
+  }
+}

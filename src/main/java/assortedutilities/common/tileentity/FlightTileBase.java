@@ -8,44 +8,64 @@ import java.util.Map.Entry;
 import assortedutilities.common.FlightTicket;
 import assortedutilities.common.PlayerTicketManager;
 import assortedutilities.common.ServerTicketManager;
+import assortedutilities.common.block.FlightBlockBase;
 import assortedutilities.common.handler.FallDamageHandler;
 import assortedutilities.common.handler.IFallDamageHandler;
 import assortedutilities.common.handler.IPlayerPresenceHandler;
 import assortedutilities.common.handler.PlayerPresenceHandler;
 import assortedutilities.common.util.AULog;
-import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.ITickable;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 
-public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler, IFallDamageHandler {
+public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler, IFallDamageHandler, ITickable {
 
 	private ArrayList<String> flyingWhenLeft = new ArrayList<String>();
 	private ArrayList<String> fallingWhenLeft = new ArrayList<String>();
-	private HashMap<String, FlightTicket> tickets = new HashMap<String, FlightTicket>();
+	private final HashMap<String, FlightTicket> tickets = new HashMap<String, FlightTicket>();
 	private boolean enabled = false;
 	private int chargeTime = 0;
 	private int chargeDelay = 0;
 	private int radius = 0;
+	private BlockPos min;
+	private BlockPos max;
+	private AxisAlignedBB bounds;
 	
 	public FlightTileBase(int radius, int chargeDelay) {
 		this.radius = radius;
 		this.chargeDelay = chargeDelay;
+	}
+
+	@Override
+	public void onLoad () {
+		this.min = new BlockPos(pos.getX() - radius, 0, pos.getZ() - radius);
+		this.max = new BlockPos(pos.getX() + radius + 1, 256, pos.getZ() + radius + 1);
+		this.bounds = new AxisAlignedBB(min, max);
 		PlayerPresenceHandler.instance.addListener(this);
 		FallDamageHandler.instance.addListener(this);
 		if (this.chargeDelay == 0) {
 			this.enabled = true;
-			worldObj.setBlockMetadataWithNotify(this.xCoord, this.yCoord, this.zCoord, 1, 6);
+			worldObj.setBlockState(this.pos, this.worldObj.getBlockState(this.pos).withProperty(FlightBlockBase.ACTIVE, true), 6);
 		}
+	}
+
+	@Override
+	public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newState) {
+		return oldState.getBlock() != newState.getBlock();
 	}
 	
 	private EntityPlayerMP getPlayerFromUUID(String playerID) {
@@ -61,10 +81,15 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 	}
 	
 	private boolean withinRange(EntityPlayer player) {
-		return (player.posX >= this.xCoord - this.radius && player.posX <= this.xCoord + this.radius + 1 && player.posY >= 0 && player.posY <= 256 && player.posZ >= this.zCoord - this.radius && player.posZ <= this.zCoord + this.radius + 1);
+		int x = pos.getX(); int z = pos.getZ();
+		return (
+				player.posX >= min.getX() && player.posX <= max.getX() &&
+				player.posY >= min.getY() && player.posY <= max.getY() &&
+				player.posZ >= min.getZ() && player.posZ <= max.getZ()
+		);
 	}
 	
-	private Vec3 randomSpot(int x0, int y0, int z0) {
+	private Vec3i randomSpot(int x0, int y0, int z0) {
 		double radius = 5.0d;
 		double u = Math.random();
 		double v = Math.random();
@@ -73,7 +98,7 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 		double x = x0 + (radius * Math.sin(phi) * Math.cos(theta));
 		double y = y0 + (radius * Math.sin(phi) * Math.sin(theta));
 		double z = z0 + (radius * Math.cos(phi));
-		return Vec3.createVectorHelper(x, y, z);
+		return new Vec3i(x, y, z);
 	}
 
 	private void dropPlayer(EntityPlayerMP player) {
@@ -82,12 +107,11 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 		PlayerTicketManager manager = ServerTicketManager.instance.getManagerForPlayer(player);
 		if (manager != null) {
 			count = manager.getFlightTicketCount();
-			AULog.debug("%d, %d, %d dropping player %s, %d -> %d flight tickets", this.xCoord, this.yCoord, this.zCoord, player.getDisplayName(), count, --count);
+			AULog.debug("%d, %d, %d dropping player %s, %d -> %d flight tickets", pos.getX(), pos.getY(), pos.getZ(), player.getName(), count, --count);
 		}
 		synchronized(this.tickets) {
-			this.tickets.get(id).setFalling();
+			this.tickets.get(id).setDropping();
 			if (manager != null) {
-				manager.update();
 				if (manager.getFlightTicketCount() > 0) {
 					this.tickets.remove(id);
 				}
@@ -106,34 +130,32 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 				AULog.debug("Flying player with existing ticket, re-using ticket %x", ticket.hashCode());
 				ticket.setFlying();
 			} else {
-				ticket = new FlightTicket(this.xCoord, this.yCoord, this.zCoord, this.worldObj.provider.dimensionId, id);
+				ticket = new FlightTicket(this.getPos(), this.worldObj.provider.getDimension(), id);
 				AULog.debug("Flying player on new ticket %x", ticket.hashCode());
 				this.tickets.put(id, ticket);
 			}
 		}
 		if (manager != null) {
 			count = manager.getFlightTicketCount();
-			AULog.debug("%d, %d, %d flying player %s on ticket %x, %d -> %d flight tickets", this.xCoord, this.yCoord, this.zCoord, player.getDisplayName(), ticket.hashCode(), count, ++count);
+			AULog.debug("%d, %d, %d flying player %s on ticket %x, %d -> %d flight tickets", pos.getX(), pos.getY(), pos.getZ(), player.getName(), ticket.hashCode(), count, ++count);
 			manager.addTicket(ticket);
 		}
 	}
 	
 	@Override
 	public void invalidate() {
-		AULog.debug("Invalidating Flight Tile @ %d, %d, %d", this.xCoord, this.yCoord, this.zCoord);
+		AULog.debug("Invalidating Flight Tile @ %d, %d, %d", pos.getX(), pos.getY(), pos.getZ());
 		this.dropAllFlyers();
 		PlayerPresenceHandler.instance.removeListener(this);
 		FallDamageHandler.instance.removeListener(this);
 		super.invalidate();
 	}
-	
-	@Override
-	public void updateEntity() {
-		super.updateEntity();
+
+	public void update() {
 		if (!worldObj.isRemote){ 
 			if (this.enabled) {
 				float radius = (float) this.radius;
-				List<EntityPlayerMP> players = worldObj.getEntitiesWithinAABB(EntityPlayerMP.class, AxisAlignedBB.getBoundingBox((float)this.xCoord - radius, 0.0f, (float)this.zCoord - radius, (float)this.xCoord + radius + 1.0f, 256.0f, (float)this.zCoord + radius + 1.0f));
+				List<EntityPlayerMP> players = worldObj.getEntitiesWithinAABB(EntityPlayerMP.class, this.bounds);
 				for (EntityPlayerMP player : players) {
 					String id = player.getUniqueID().toString();
 					if (!this.tickets.containsKey(id) || this.tickets.get(id).isFalling()) {
@@ -148,8 +170,8 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 					for (String trackedID : this.tickets.keySet()) {
 						EntityPlayerMP tracked = getPlayerFromUUID(trackedID);
 						if (tracked != null) {
-							if (this.tickets.get(trackedID).isFlying() && !players.contains(tracked) && tracked.dimension == this.worldObj.provider.dimensionId) {
-								AULog.debug("OoR drop decision, %s: %d, %d", tracked.getDisplayName(), tracked.dimension, this.worldObj.provider.dimensionId);
+							if (this.tickets.get(trackedID).isFlying() && !players.contains(tracked) && tracked.dimension == this.worldObj.provider.getDimension()) {
+								AULog.debug("OoR drop decision, %s: %d, %d", tracked.getName(), tracked.dimension, this.worldObj.provider.getDimension());
 								droplist.add(tracked);
 							}
 						}
@@ -162,21 +184,22 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 				this.chargeTime++;
 				if (this.chargeTime > this.chargeDelay) {
 					this.enabled = true;
-					worldObj.setBlockMetadataWithNotify(this.xCoord, this.yCoord, this.zCoord, 1, 6);
+					worldObj.setBlockState(this.pos, this.worldObj.getBlockState(this.pos).withProperty(FlightBlockBase.ACTIVE, true), 6);
 				}
 			}
 		} else {
-			if (this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) != 1) {
+			if (!this.worldObj.getBlockState(this.pos).getValue(FlightBlockBase.ACTIVE)) {
 				//spawn particles to show charging.
 				double velocity = 0.6d;
 				for (int i = 0; i < 4; i++) {
-					Vec3 vec = this.randomSpot(this.xCoord, this.yCoord, this.zCoord);
-					this.worldObj.spawnParticle("crit", vec.xCoord + 0.5d, vec.yCoord + 0.5d, vec.zCoord + 0.5d, ((double)this.xCoord - vec.xCoord) * velocity, ((double)this.yCoord - vec.yCoord) * velocity, ((double)this.zCoord - vec.zCoord) * velocity);
+					Vec3i vec = this.randomSpot(pos.getX(), pos.getY(), pos.getZ());
+					this.worldObj.spawnParticle(EnumParticleTypes.CRIT, vec.getX() + 0.5d, vec.getY() + 0.5d, vec.getZ() + 0.5d, ((double)this.pos.getX() - vec.getX()) * velocity, ((double)this.pos.getY() - vec.getY()) * velocity, ((double)this.pos.getZ() - vec.getZ()) * velocity);
 				}
 			}
 		}
 	}
-	
+
+	@Override
 	public void readFromNBT(NBTTagCompound tag) {
 		super.readFromNBT(tag);
 	
@@ -191,8 +214,9 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 		
 		this.chargeTime = tag.getInteger("chargeTime");
 	}
-	
-	public void writeToNBT(NBTTagCompound tag) {
+
+	@Override
+	public NBTTagCompound writeToNBT(NBTTagCompound tag) {
 		super.writeToNBT(tag);
 		
 		NBTTagList names = new NBTTagList();
@@ -202,7 +226,7 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 				String id = entry.getKey();
 				EntityPlayerMP player = getPlayerFromUUID(id);
 				if (player != null) {
-					if (entry.getValue().isFalling()) {
+					if (entry.getValue().isDroppingOrFalling()) {
 						names.appendTag(new NBTTagString(id));
 					} else if (player.capabilities.isFlying) {
 						flying.appendTag(new NBTTagString(id));
@@ -220,6 +244,7 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 		tag.setTag("UUIDs", names);
 		tag.setTag("FlyingUUIDs", flying);
 		tag.setInteger("chargeTime", this.chargeTime);
+		return tag;
 	}
 	
 	public void dropAllFlyers() {
@@ -233,7 +258,7 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 	@Override
 	public void onLogin(PlayerLoggedInEvent event) {
 		if (this.flyingWhenLeft.contains(event.player.getUniqueID().toString())) {
-			AULog.debug("Player %s logged in and was previously flying", event.player.getDisplayName());
+			AULog.debug("Player %s logged in and was previously flying", event.player.getName());
 			this.flyingWhenLeft.remove(event.player.getUniqueID().toString());
 			if (withinRange(event.player)) {
 				if (event.player instanceof EntityPlayerMP) {
@@ -258,8 +283,8 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 	@Override
 	public void onWorldChange(EntityJoinWorldEvent event) {
 		if (!worldObj.isRemote){ 
-			EntityPlayerMP player = (EntityPlayerMP) event.entity;
-			if (event.world.provider.dimensionId == this.worldObj.provider.dimensionId) {
+			EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
+			if (event.getWorld().provider.getDimension() == this.worldObj.provider.getDimension()) {
 				if (withinRange(player)) {
 					if (!player.isDead) {
 						flyPlayer(player);
@@ -280,15 +305,15 @@ public class FlightTileBase extends TileEntity implements IPlayerPresenceHandler
 		if (this.worldObj == null) {
 			return 0;
 		} else {
-			return this.worldObj.provider.dimensionId;
+			return this.worldObj.provider.getDimension();
 		}
 		
 	}
 
 	@Override
 	public void onFall(LivingFallEvent event) {
-		if (event.entity instanceof EntityPlayerMP) {
-			EntityPlayerMP player = (EntityPlayerMP) event.entity;
+		if (event.getEntity() instanceof EntityPlayerMP) {
+			EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
 			synchronized(this.tickets) {
 				this.tickets.remove(player.getUniqueID().toString());
 			}

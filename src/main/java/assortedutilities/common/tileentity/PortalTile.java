@@ -1,98 +1,208 @@
 package assortedutilities.common.tileentity;
 
-import java.util.Iterator;
-
-import cpw.mods.fml.common.FMLCommonHandler;
 import assortedutilities.common.util.AULog;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.play.server.S07PacketRespawn;
-import net.minecraft.network.play.server.S1DPacketEntityEffect;
+import net.minecraft.network.play.server.SPacketEntityEffect;
+import net.minecraft.network.play.server.SPacketPlayerAbilities;
+import net.minecraft.network.play.server.SPacketRespawn;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.ServerConfigurationManager;
+import net.minecraft.server.management.PlayerList;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.ITickable;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
+
+import java.lang.reflect.Field;
 
 public class PortalTile extends TileEntity {
 	
-	private Vec3 destination;
+	private Vec3d destination;
 	private int destDimension = 0;
 	private float yaw;
 	
+	/*public void onCollide(Entity entity) {
+		AULog.debug("World Remote: %b; Destination Null: %b", worldObj.isRemote, destination == null);
+		if (!worldObj.isRemote && destination != null) {
+			int oldDimension = entity.dimension;
+			EntityPlayerMP player = null;
+			if(entity instanceof EntityPlayerMP) {
+				player = (EntityPlayerMP) entity;
+			}
+			MinecraftServer server = entity.getServer();
+			WorldServer worldserver = server.worldServerForDimension(entity.dimension);
+
+			double x = destination.xCoord, y = destination.yCoord, z = destination.zCoord;
+			if (entity.dimension == destDimension) {
+				AULog.debug("Traveling to %f, %f, %f in same dimension", x, y, z);
+				entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
+				if (player != null) {player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);}
+				worldserver.updateEntityWithOptionalForce(entity, false);
+			} else {
+				if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(entity, destDimension)) return;
+
+				AULog.debug("Traveling to %f, %f, %f in dim %d", x, y, z, destDimension);
+
+				this.worldObj.theProfiler.startSection("changeDimension");
+				WorldServer worldserver1 = server.worldServerForDimension(destDimension);
+
+				entity.dimension = destDimension;
+				player.connection.sendPacket(new SPacketRespawn(player.dimension, worldserver1.getDifficulty(), worldserver1.getWorldInfo().getTerrainType(), player.interactionManager.getGameType()));
+				PlayerList list = server.getPlayerList();
+				list.updatePermissionLevel(player);
+				worldserver.removeEntityDangerously(player);
+				this.worldObj.removeEntity(entity);
+				entity.isDead = false;
+				this.worldObj.theProfiler.startSection("reposition");
+				entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
+				worldserver.updateEntityWithOptionalForce(entity, false);
+				if (player != null) {
+					list.preparePlayer(player, worldserver);
+					player.connection.setPlayerLocation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
+					player.interactionManager.setWorld(worldserver1);
+					player.connection.sendPacket(new SPacketPlayerAbilities(player.capabilities));
+					list.updateTimeAndWeatherForPlayer(player, worldserver1);
+					list.syncPlayerInventory(player);
+
+					for (PotionEffect potioneffect : player.getActivePotionEffects())
+					{
+						player.connection.sendPacket(new SPacketEntityEffect(player.getEntityId(), potioneffect));
+					}
+					net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerChangedDimensionEvent(player, oldDimension, destDimension);
+				}
+
+				this.worldObj.theProfiler.startSection("reloading");
+				Entity newEntity = EntityList.createEntityByName(EntityList.getEntityString(entity), worldserver1);
+
+				if (newEntity != null) {
+					NBTTagCompound tag = entity.writeToNBT(new NBTTagCompound());
+					tag.removeTag("Dimension");
+					newEntity.readFromNBT(tag);
+
+					newEntity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
+
+					boolean flag = newEntity.forceSpawn;
+					newEntity.forceSpawn = true;
+					worldserver1.spawnEntityInWorld(newEntity);
+					newEntity.forceSpawn = flag;
+					worldserver1.updateEntityWithOptionalForce(newEntity, true);
+				}
+
+				entity.isDead = true;
+				this.worldObj.theProfiler.endSection();
+				worldserver.resetUpdateEntityTick();
+				worldserver1.resetUpdateEntityTick();
+				this.worldObj.theProfiler.endSection();
+			}
+			AULog.debug("Travel Complete");
+		}
+	}*/
+
 	public void onCollide(Entity entity) {
 		if (!worldObj.isRemote && destination != null) {
+			if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(entity, destDimension)) return;
 			double x = destination.xCoord, y = destination.yCoord, z = destination.zCoord;
+			int oldDimension = entity.dimension;
 			AULog.debug("Initialize teleport");
-	    	entity.motionX = entity.motionY = entity.motionZ = 0.0D;
-	        entity.setPosition(x, y, z);
-	        EntityPlayerMP entityMP = null;
-	    	if (entity instanceof EntityPlayerMP) {entityMP = (EntityPlayerMP) entity;}
-	    	
-	        MinecraftServer server = MinecraftServer.getServer();
-	        WorldServer worldserver1 = server.worldServerForDimension(destDimension);
-	        if (entity.dimension != destDimension) {
-	        	AULog.debug("Entity isn't in target dimension");
-		    	ServerConfigurationManager configurationManager = server.getConfigurationManager();
-		       
-		    	int oldDimension = entity.dimension;
-		        WorldServer worldserver = server.worldServerForDimension(entity.dimension);
-		        entity.dimension = destDimension;
-		    	if (entityMP != null) {
-		    		AULog.debug("Entity is a Player");
-			        entityMP.playerNetServerHandler.sendPacket(new S07PacketRespawn(entity.dimension, entity.worldObj.difficultySetting, entity.worldObj.getWorldInfo().getTerrainType(), entityMP.theItemInWorldManager.getGameType()));
-			        worldserver.removePlayerEntityDangerously(entity);
-			        entity.isDead = false;
-		    	}
-		        
-		        //begin transfer-entity-to-world
-		        worldserver.theProfiler.startSection("placing");
-		
-		        if (entity.isEntityAlive())
-		        {
-		            entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
-		            worldserver1.spawnEntityInWorld(entity);
-		            worldserver1.updateEntityWithOptionalForce(entity, false);
-		        }
-		
-		        worldserver.theProfiler.endSection();
-		        entity.setWorld(worldserver1);
-		        //end transfer-entity-to-world
-		        
-		        if (entityMP != null) {
-			        configurationManager.func_72375_a(entityMP, worldserver);
-			        entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, yaw, entity.rotationPitch);
-			        entityMP.theItemInWorldManager.setWorld(worldserver1);
-			        configurationManager.updateTimeAndWeatherForPlayer(entityMP, worldserver1);
-			        configurationManager.syncPlayerInventory(entityMP);
-			        Iterator iterator = entityMP.getActivePotionEffects().iterator();
-			
-			        while (iterator.hasNext())
-			        {
-			            PotionEffect potioneffect = (PotionEffect)iterator.next();
-			            entityMP.playerNetServerHandler.sendPacket(new S1DPacketEntityEffect(entity.getEntityId(), potioneffect));
-			        }
-			        FMLCommonHandler.instance().firePlayerChangedDimensionEvent(entityMP, oldDimension, destDimension);
-		        }
-	        }
-	        
-	        AULog.debug("Setting new position: %f %f %f", x, y, z);
-	        entity.setPosition(x, y, z);
-	        if (entityMP != null) {
-	        	entityMP.playerNetServerHandler.setPlayerLocation(entity.posX, entity.posY, entity.posZ, yaw, entity.rotationPitch);
-	        	entityMP.addExperienceLevel(0);
-	        }
-	        worldserver1.updateEntityWithOptionalForce(entity, false);
+			entity.motionX = entity.motionY = entity.motionZ = 0.0D;
+			entity.setPosition(x, y, z);
+			EntityPlayerMP player = null;
+			if (entity instanceof EntityPlayerMP) {player = (EntityPlayerMP) entity;}
+
+			MinecraftServer server = entity.getServer();
+			WorldServer worldserver = server.worldServerForDimension(oldDimension);
+			WorldServer worldserver1 = server.worldServerForDimension(destDimension);
+			if (entity.dimension != destDimension) {
+				AULog.debug("Entity isn't in target dimension");
+				PlayerList list = server.getPlayerList();
+
+				if (player != null) {
+					//Terrible, awful, reflection to set necesary fields in the player. Don't try this at home.
+					try {
+						Field invuln = ReflectionHelper.findField(EntityPlayerMP.class, "invulnerableDimensionChange", "field_184851_cj");
+						invuln.setAccessible(true);
+						invuln.set(player, true);
+					} catch (ReflectionHelper.UnableToFindFieldException e) {
+						AULog.warn("Cannot find invulnerability field!");
+					} catch (IllegalAccessException e) {
+						AULog.warn("Cannot access invulnerability field!");
+					}
+				}
+
+				entity.dimension = destDimension;
+				if (player != null) {
+					AULog.debug("Entity is a Player");
+					player.connection.sendPacket(new SPacketRespawn(player.dimension, worldserver1.getDifficulty(), worldserver1.getWorldInfo().getTerrainType(), player.interactionManager.getGameType()));
+					worldserver.removeEntityDangerously(player);
+					entity.isDead = false;
+
+				}
+
+				//begin transfer-entity-to-world
+				worldserver.theProfiler.startSection("placing");
+				entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
+				worldserver1.spawnEntityInWorld(entity);
+				worldserver1.updateEntityWithOptionalForce(entity, false);
+
+				if (entity.isEntityAlive() && player == null) {
+					this.worldObj.theProfiler.startSection("reloading");
+					Entity newEntity = EntityList.createEntityByName(EntityList.getEntityString(entity), worldserver1);
+
+					if (newEntity != null) {
+						NBTTagCompound tag = entity.writeToNBT(new NBTTagCompound());
+						tag.removeTag("Dimension");
+						newEntity.readFromNBT(tag);
+
+						newEntity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
+
+						boolean flag = newEntity.forceSpawn;
+						newEntity.forceSpawn = true;
+						worldserver1.spawnEntityInWorld(newEntity);
+						newEntity.forceSpawn = flag;
+						worldserver1.updateEntityWithOptionalForce(newEntity, true);
+					}
+
+					entity.isDead = true;
+					this.worldObj.theProfiler.endSection();
+				}
+
+				worldserver.theProfiler.endSection();
+				entity.setWorld(worldserver1);
+				//end transfer-entity-to-world
+
+				if (player != null) {
+					list.preparePlayer(player, worldserver);
+					player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);
+					player.interactionManager.setWorld(worldserver1);
+					player.connection.sendPacket(new SPacketPlayerAbilities(player.capabilities));
+					list.updateTimeAndWeatherForPlayer(player, worldserver1);
+					list.syncPlayerInventory(player);
+					for (PotionEffect potioneffect : player.getActivePotionEffects()) {
+						player.connection.sendPacket(new SPacketEntityEffect(player.getEntityId(), potioneffect));
+					}
+					net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerChangedDimensionEvent(player, oldDimension, destDimension);
+				}
+			}
+
+			if (player != null) {
+				AULog.debug("Setting new player position: %f %f %f", x, y, z);
+				player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);
+				player.addExperienceLevel(0);
+			} else {
+				AULog.debug("Setting new entity position: %f %f %f", x, y, z);
+				entity.setPosition(x, y, z);
+				worldserver1.updateEntityWithOptionalForce(entity, false);
+			}
 		}
 	}
 
 	public void setDestination(double x, double y, double z, int dim, float yaw) {
-		this.destination = Vec3.createVectorHelper(x, y, z);
+		this.destination = new Vec3d(x, y, z);
 		this.destDimension = dim;
 		this.yaw = yaw;
 		this.markDirty();
@@ -101,13 +211,13 @@ public class PortalTile extends TileEntity {
 	public void readFromNBT(NBTTagCompound tag) {
 		super.readFromNBT(tag);
 		NBTTagCompound dest = tag.getCompoundTag("destination");
-		destination = Vec3.createVectorHelper(dest.getDouble("x"), dest.getDouble("y"), dest.getDouble("z"));
+		destination = new Vec3d(dest.getDouble("x"), dest.getDouble("y"), dest.getDouble("z"));
 		yaw = dest.getFloat("yaw");
 		destDimension = dest.getInteger("dim");
 	}
 	
-	public void writeToNBT(NBTTagCompound tag) {
-		super.writeToNBT(tag);
+	public NBTTagCompound writeToNBT(NBTTagCompound tag) {
+		tag = super.writeToNBT(tag);
 		NBTTagCompound dest = new NBTTagCompound();
 		dest.setDouble("x", destination.xCoord);
 		dest.setDouble("y", destination.yCoord);
@@ -115,6 +225,7 @@ public class PortalTile extends TileEntity {
 		dest.setFloat("yaw", yaw);
 		dest.setInteger("dim", destDimension);
 		tag.setTag("destination", dest);
+		return tag;
 	}
 
 }

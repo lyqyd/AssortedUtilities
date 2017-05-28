@@ -29,7 +29,7 @@ public class AULog {
 	}
 	
 	public static void debug(String format, Object... data) {
-		log(Level.DEBUG, format, data);
+		log(Level.WARN, format, data);
 	}
 
 }

@@ -1,16 +1,14 @@
 package assortedutilities.common.handler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
 
 import assortedutilities.common.util.AULog;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 
 public class PlayerPresenceHandler {
 	
@@ -38,21 +36,13 @@ public class PlayerPresenceHandler {
 	
 	@SubscribeEvent
 	public void onEntityJoinWorld(EntityJoinWorldEvent event) {
-		if (event.entity != null && event.entity instanceof EntityPlayerMP) {
-			EntityPlayerMP player = (EntityPlayerMP) event.entity;
-			int dimension = event.world.provider.dimensionId;
-			AULog.debug("PPH EJW %s %d", player.getDisplayName(), dimension);
-			String name = player.getDisplayName();
+		Entity entity = event.getEntity();
+		if (entity != null && entity instanceof EntityPlayerMP) {
+			EntityPlayerMP player = (EntityPlayerMP) entity;
+			AULog.debug("PPH EJW %s %d", player.getName(), event.getWorld().provider.getDimension());
 			synchronized(listeners) {
 				for(IPlayerPresenceHandler listener : listeners) {
-					if (listener.getHandlerDimension() == dimension) {
-						listener.onWorldChange(event);
-					}
-				}
-				for(IPlayerPresenceHandler listener : listeners) {
-					if(listener.getHandlerDimension() != dimension) {
-						listener.onWorldChange(event);
-					}
+					listener.onWorldChange(event);
 				}
 			}
 		}

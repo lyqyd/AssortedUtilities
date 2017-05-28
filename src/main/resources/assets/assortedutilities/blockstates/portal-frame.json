@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "lit=true": { "model": "assortedutilities:portal-frame" },
+    "lit=false": { "model": "assortedutilities:portal-frame" }
+  }
+}

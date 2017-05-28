@@ -2,8 +2,10 @@ package assortedutilities.common;
 
 import java.lang.ref.WeakReference;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -29,66 +31,26 @@ public class CommonProxy {
 	public void preInit() {
 		MinecraftForge.EVENT_BUS.register(FallDamageHandler.instance);
 		MinecraftForge.EVENT_BUS.register(PlayerPresenceHandler.instance);
-		FMLCommonHandler.instance().bus().register(PlayerPresenceHandler.instance);
 		ServerTicketManager.instance.init();
-		
-		registerItems();
-		registerBlocks();
+		MinecraftForge.EVENT_BUS.register(ServerTicketManager.instance);
+		registerRenderInformation();
 	}
 	
 	public void init() {
 		registerRecipes();
-		registerRenderInformation();
 	}
 	
 	public void registerRenderInformation() {
 		
 	}
 	
-	private void registerItems() {
-		int count = 0;
-		if (AssortedUtilities.Config.portalsEnabled) {
-			AssortedUtilities.Items.locationCard = new PortalLocationItem();
-			GameRegistry.registerItem(AssortedUtilities.Items.locationCard, "locationCard", "assortedutilities");
-			count++;
-		}
-		
-		AULog.debug("Registered %d items.", count);
-	}
-	
-	private void registerBlocks() {
-		int count = 0;
-		if (AssortedUtilities.Config.obliteratorEnabled) {
-			AssortedUtilities.Blocks.obliteratorBlock = new ObliteratorBlock();
-			count++;
-		}
-		if (AssortedUtilities.Config.portalsEnabled) {
-			AssortedUtilities.Blocks.portalFrameBlock = new PortalFrameBlock();
-			count++;
-			AssortedUtilities.Blocks.portalControllerBlock = new PortalControllerBlock();
-			GameRegistry.registerBlock(AssortedUtilities.Blocks.portalControllerBlock, PortalControllerItem.class, "portalController");
-			count++;
-			AssortedUtilities.Blocks.portalBlock = new PortalBlock();
-			count++;
-		}
-		if (AssortedUtilities.Config.enableAdvanced) {
-			AssortedUtilities.Blocks.flightBlockAdv = new AdvancedFlightBlock();
-			count++;
-		}
-		if (AssortedUtilities.Config.enableBasic) {
-			AssortedUtilities.Blocks.flightBlockBsc = new BasicFlightBlock();
-			count++;
-		}		
-		AULog.debug("Registered %d blocks.", count);
-	}
-	
 	private void registerRecipes() {
 		int count = 0;
-		if (AssortedUtilities.Config.obliteratorEnabled && AssortedUtilities.Config.obliteratorRecipeEnabled) {
+		if (AssortedUtilities.Config.obliteratorRecipeEnabled) {
 			ItemStack obliterator = new ItemStack(AssortedUtilities.Blocks.obliteratorBlock, 1);
-			ItemStack cobblestone = new ItemStack((Block)Block.blockRegistry.getObject("cobblestone"));
-			ItemStack obsidian = new ItemStack((Block)Block.blockRegistry.getObject("obsidian"));
-			ItemStack bucket = new ItemStack((Item)Item.itemRegistry.getObject("lava_bucket"));
+			ItemStack cobblestone = new ItemStack(Block.getBlockFromName("minecraft:cobblestone"));
+			ItemStack obsidian = new ItemStack(Block.getBlockFromName("minecraft:obsidian"));
+			ItemStack bucket = new ItemStack(Item.getByNameOrId("minecraft:lava_bucket"));
 			GameRegistry.addRecipe(obliterator,
 					"o o",
 					"clc",
@@ -96,48 +58,46 @@ public class CommonProxy {
 					'o', obsidian, 'c', cobblestone, 'l', bucket);
 			count++;
 		}
-		
-		if (AssortedUtilities.Config.portalsEnabled) {
-			ItemStack locationCard = new ItemStack(AssortedUtilities.Items.locationCard, 1);
-			ItemStack portalFrame = new ItemStack(AssortedUtilities.Blocks.portalFrameBlock);
-			ItemStack iron = new ItemStack((Item)Item.itemRegistry.getObject("iron_ingot"));
-			if (AssortedUtilities.Config.portalLocationCardRecipeEnabled) {
-				ItemStack enderEye = new ItemStack((Item)Item.itemRegistry.getObject("ender_eye"));
-				ItemStack redstone = new ItemStack((Item)Item.itemRegistry.getObject("redstone"));
-				GameRegistry.addShapelessRecipe(locationCard, new Object[] {iron, enderEye, redstone});
-				count++;
-			}
-			if (AssortedUtilities.Config.portalLocationCardResetRecipeEnabled) {
-				GameRegistry.addShapelessRecipe(locationCard, new Object[] {locationCard});
-				count++;
-			}
-			if (AssortedUtilities.Config.portalFrameRecipeEnabled) {
-				ItemStack enderPearl = new ItemStack((Item)Item.itemRegistry.getObject("ender_pearl"));
-				GameRegistry.addRecipe(portalFrame,
-						"i i",
-						" p ",
-						"i i",
-						'i', iron, 'p', enderPearl);
-				count++;
-			}
-			if (AssortedUtilities.Config.portalControllerRecipeEnabled) {
-				ItemStack portalController = new ItemStack(AssortedUtilities.Blocks.portalControllerBlock);
-				GameRegistry.addRecipe(portalController,
-						"fff",
-						"f f",
-						"fff",
-						'f', portalFrame);
-				count++;
-			}
+
+		ItemStack locationCard = new ItemStack(AssortedUtilities.Items.locationCard, 1);
+		ItemStack portalFrame = new ItemStack(AssortedUtilities.Blocks.portalFrameBlock);
+		ItemStack ironIngot = new ItemStack(Item.getByNameOrId("minecraft:iron_ingot"));
+		if (AssortedUtilities.Config.portalLocationCardRecipeEnabled) {
+			ItemStack enderEye = new ItemStack(Item.getByNameOrId("minecraft:ender_eye"));
+			ItemStack redstone = new ItemStack(Item.getByNameOrId("minecraft:redstone"));
+			GameRegistry.addShapelessRecipe(locationCard, new Object[] {ironIngot, enderEye, redstone});
+			count++;
+		}
+		if (AssortedUtilities.Config.portalLocationCardResetRecipeEnabled) {
+			GameRegistry.addShapelessRecipe(locationCard, new Object[] {locationCard});
+			count++;
+		}
+		if (AssortedUtilities.Config.portalFrameRecipeEnabled) {
+			ItemStack enderPearl = new ItemStack(Item.getByNameOrId("minecraft:ender_pearl"));
+			GameRegistry.addRecipe(portalFrame,
+					"i i",
+					" p ",
+					"i i",
+					'i', ironIngot, 'p', enderPearl);
+			count++;
+		}
+		if (AssortedUtilities.Config.portalControllerRecipeEnabled) {
+			ItemStack portalController = new ItemStack(AssortedUtilities.Blocks.portalControllerBlock);
+			GameRegistry.addRecipe(portalController,
+					"fff",
+					"f f",
+					"fff",
+					'f', portalFrame);
+			count++;
 		}
 		
-		ItemStack feather = new ItemStack((Item)Item.itemRegistry.getObject("feather"));
-		if (AssortedUtilities.Config.enableAdvanced && AssortedUtilities.Config.enableAdvancedRecipe) { 
+		ItemStack feather = new ItemStack(Item.getByNameOrId("minecraft:feather"));
+		if (AssortedUtilities.Config.enableAdvancedRecipe) {
 			ItemStack flightBlockAdv = new ItemStack(AssortedUtilities.Blocks.flightBlockAdv);
-			ItemStack diamond = new ItemStack((Block)Block.blockRegistry.getObject("diamond_block"));
-			ItemStack emerald = new ItemStack((Item)Item.itemRegistry.getObject("emerald"));
-			ItemStack gold = new ItemStack((Block)Block.blockRegistry.getObject("gold_block"));
-			ItemStack diamond_item = new ItemStack((Item)Item.itemRegistry.getObject("diamond"));
+			ItemStack diamond = new ItemStack(Block.getBlockFromName("minecraft:diamond_block"));
+			ItemStack emerald = new ItemStack(Item.getByNameOrId("minecraft:emerald"));
+			ItemStack gold = new ItemStack(Block.getBlockFromName("minecraft:gold_block"));
+			ItemStack diamond_item = new ItemStack(Item.getByNameOrId("minecraft:diamond"));
 			if (AssortedUtilities.Config.cheapRecipe) {
 				GameRegistry.addRecipe(flightBlockAdv,
 						" g ",
@@ -154,14 +114,14 @@ public class CommonProxy {
 				count++;
 			}
 		}
-		if (AssortedUtilities.Config.enableBasic && AssortedUtilities.Config.enableBasicRecipe) {
+		if (AssortedUtilities.Config.enableBasicRecipe) {
 			ItemStack flightBlockBsc = new ItemStack(AssortedUtilities.Blocks.flightBlockBsc);
-			ItemStack iron = new ItemStack((Block)Block.blockRegistry.getObject("iron_block"));
+			ItemStack ironBlock = new ItemStack(Block.getBlockFromName("minecraft:iron_block"));
 			GameRegistry.addRecipe(flightBlockBsc,
 					" i ",
 					" f ",
 					" i ",
-					'i', iron, 'f', feather);
+					'i', ironBlock, 'f', feather);
 			count++;
 		}
 		

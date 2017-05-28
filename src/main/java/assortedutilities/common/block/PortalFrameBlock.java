@@ -3,53 +3,40 @@ package assortedutilities.common.block;
 import java.util.ArrayList;
 import java.util.Stack;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.IIcon;
-import net.minecraft.world.World;
-import assortedutilities.common.tileentity.ObliteratorTile;
 import assortedutilities.common.tileentity.PortalControllerTile;
 import assortedutilities.common.util.AULog;
-import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.state.BlockStateContainer;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.world.World;
 
 public class PortalFrameBlock extends Block {
-	
-	private IIcon[] icons = new IIcon[2];
+
+	public static final PropertyBool LIT = PropertyBool.create("lit");
 
 	public PortalFrameBlock() {
-		super(Material.iron);
+		super(Material.IRON);
 		setHardness(0.5F);
-		setCreativeTab(CreativeTabs.tabTransport);
-		GameRegistry.registerBlock(this, "portalFrame");
-		setBlockName("assortedutilities.portalFrame");
-		this.setBlockTextureName("assortedutilities:portalFrame");
+		this.setDefaultState(this.blockState.getBaseState().withProperty(PortalFrameBlock.LIT, false));
+		setCreativeTab(CreativeTabs.TRANSPORTATION);
+		setRegistryName("portal-frame");
+		setUnlocalizedName("portal-frame");
 	}
 	
-	@Override
-	public void registerBlockIcons(IIconRegister register) {
-		for (int i = 0; i < 2; i++) {
-			this.icons[i] = register.registerIcon(this.textureName + "_" + i);
-		}
-	}
-	
-	@Override
-	public IIcon getIcon(int side, int meta) {
-		return this.icons[meta];
-	}
-	
-	private ArrayList<ChunkCoordinates> findAllConnectedFrames(World world, int x, int y, int z) {
-		ArrayList<ChunkCoordinates> result = new ArrayList<ChunkCoordinates>();
-		Stack<ChunkCoordinates> stack =  new Stack<ChunkCoordinates>();
-		ChunkCoordinates origin = new ChunkCoordinates(x, y, z);
+	private ArrayList<BlockPos> findAllConnectedFrames(World world, BlockPos origin) {
+		ArrayList<BlockPos> result = new ArrayList<BlockPos>();
+		Stack<BlockPos> stack =  new Stack<BlockPos>();
 		stack.push(origin);
 		
 		while (stack.size() > 0) {
-			ChunkCoordinates current = stack.pop();
+			BlockPos current = stack.pop();
 			if (!result.contains(current)) {
-				ChunkCoordinates[] neighbors = getFrameNeighbors(world, current.posX, current.posY, current.posZ);
+				BlockPos[] neighbors = getFrameNeighbors(world, current);
 				for (int i = 0; i < neighbors.length; i++) {
 					if (neighbors[i] != null && !result.contains(neighbors[i])) {
 						stack.push(neighbors[i]);
@@ -61,22 +48,22 @@ public class PortalFrameBlock extends Block {
 		return result;
 	}
 	
-	private ArrayList<PortalControllerTile> findPortalControllers(World world, int x, int y, int z) {
+	private ArrayList<PortalControllerTile> findPortalControllers(World world, BlockPos origin) {
 		ArrayList<PortalControllerTile> result = new ArrayList<PortalControllerTile>();
-		ArrayList<ChunkCoordinates> connectedFrames = findAllConnectedFrames(world, x, y, z);
-		for (ChunkCoordinates location : connectedFrames) {
-			result.addAll(getConnectedControllers(world, location.posX, location.posY, location.posZ));
+		ArrayList<BlockPos> connectedFrames = findAllConnectedFrames(world, origin);
+		for (BlockPos location : connectedFrames) {
+			result.addAll(getConnectedControllers(world, location));
 		}
 		
 		return result;
 	}
 	
 	/*private ArrayList<PortalControllerTile> findPortalControllers(World world, int x, int y, int z) {
-		ChunkCoordinates origin = new ChunkCoordinates(x, y, z);
+		BlockPos origin = new BlockPos(x, y, z);
 		AULog.debug("Origin: %s", origin.toString());
 		ArrayList<PortalControllerTile> result = new ArrayList<PortalControllerTile>();
-		ChunkCoordinates last = origin;
-		ChunkCoordinates current = origin;
+		BlockPos last = origin;
+		BlockPos current = origin;
 		int axisFlag = 0;	
 		
 		while (true) {
@@ -86,8 +73,8 @@ public class PortalFrameBlock extends Block {
 				AULog.debug("Current block is instance of PFB");
 				PortalFrameBlock portalFrame = (PortalFrameBlock)currBlock;
 				result.addAll(portalFrame.getConnectedControllers(world, current.posX, current.posY, current.posZ));
-				ChunkCoordinates[] neighbors = portalFrame.getFrameNeighbors(world, current.posX, current.posY, current.posZ);
-				ChunkCoordinates next = null;
+				BlockPos[] neighbors = portalFrame.getFrameNeighbors(world, current.posX, current.posY, current.posZ);
+				BlockPos next = null;
 				int neighborCount = 0;
 				for (int i = 0; i < neighbors.length; i++) {
 					if (neighbors[i] != null) {
@@ -124,55 +111,82 @@ public class PortalFrameBlock extends Block {
 		
 		return result;
 	}*/
+
+	private BlockPos[] getNeighborCoordinates(BlockPos origin) {
+		return new BlockPos[] {
+				origin.down(), origin.up(),
+				origin.north(), origin.south(),
+				origin.west(), origin.east()
+		};
+	}
 	
-	public ChunkCoordinates[] getFrameNeighbors(World world, int x, int y, int z) {
-		ChunkCoordinates[] result = new ChunkCoordinates[6];
-		if (world.getBlock(x, y - 1, z) instanceof PortalFrameBlock) {result[0] = new ChunkCoordinates(x, y - 1, z);}
-		if (world.getBlock(x, y + 1, z) instanceof PortalFrameBlock) {result[1] = new ChunkCoordinates(x, y + 1, z);}
-		if (world.getBlock(x, y, z - 1) instanceof PortalFrameBlock) {result[2] = new ChunkCoordinates(x, y, z - 1);}
-		if (world.getBlock(x, y, z + 1) instanceof PortalFrameBlock) {result[3] = new ChunkCoordinates(x, y, z + 1);}
-		if (world.getBlock(x - 1, y, z) instanceof PortalFrameBlock) {result[4] = new ChunkCoordinates(x - 1, y, z);}
-		if (world.getBlock(x + 1, y, z) instanceof PortalFrameBlock) {result[5] = new ChunkCoordinates(x + 1, y, z);}
+	public BlockPos[] getFrameNeighbors(World world, BlockPos origin) {
+		BlockPos[] coords = getNeighborCoordinates(origin);
+		BlockPos[] result = new BlockPos[6];
+		int i = 0;
+		for (BlockPos pos : coords) {
+			if (world.getBlockState(pos).getBlock() instanceof PortalFrameBlock) {
+				result[i] = pos;
+			} else {
+				result[i] = null;
+			}
+			i++;
+		}
 		return result;
 	}
 	
-	public int getFrameNeighborCount(World world, int x, int y, int z) {
+	public int getFrameNeighborCount(World world, BlockPos origin) {
 		int result = 0;
-		if (world.getBlock(x, y - 1, z) instanceof PortalFrameBlock) {result++;}
-		if (world.getBlock(x, y + 1, z) instanceof PortalFrameBlock) {result++;}
-		if (world.getBlock(x, y, z - 1) instanceof PortalFrameBlock) {result++;}
-		if (world.getBlock(x, y, z + 1) instanceof PortalFrameBlock) {result++;}
-		if (world.getBlock(x - 1, y, z) instanceof PortalFrameBlock) {result++;}
-		if (world.getBlock(x + 1, y, z) instanceof PortalFrameBlock) {result++;}
+		BlockPos[] coords = getNeighborCoordinates(origin);
+		for (int i = 0; i < 6; i++) {
+			if (world.getBlockState(coords[i]).getBlock() instanceof PortalFrameBlock) {result++;}
+		}
 		return result;
 	}
 	
-	public ArrayList<PortalControllerTile> getConnectedControllers(World world, int x, int y, int z) {
+	public ArrayList<PortalControllerTile> getConnectedControllers(World world, BlockPos origin) {
 		ArrayList<PortalControllerTile> result = new ArrayList<PortalControllerTile>();
-		if (world.getBlock(x, y - 1, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y - 1, z) & 7) == 1) {result.add((PortalControllerTile) world.getTileEntity(x, y - 1, z));}
-		if (world.getBlock(x, y + 1, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y + 1, z) & 7) == 0) {result.add((PortalControllerTile) world.getTileEntity(x, y + 1, z));}
-		if (world.getBlock(x, y, z - 1) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y, z - 1) & 7) == 3) {result.add((PortalControllerTile) world.getTileEntity(x, y, z - 1));}
-		if (world.getBlock(x, y, z + 1) instanceof PortalControllerBlock && (world.getBlockMetadata(x, y, z + 1) & 7) == 2) {result.add((PortalControllerTile) world.getTileEntity(x, y, z + 1));}
-		if (world.getBlock(x - 1, y, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x - 1, y, z) & 7) == 5) {result.add((PortalControllerTile) world.getTileEntity(x - 1, y, z));}
-		if (world.getBlock(x + 1, y, z) instanceof PortalControllerBlock && (world.getBlockMetadata(x + 1, y, z) & 7) == 4) {result.add((PortalControllerTile) world.getTileEntity(x + 1, y, z));}
+		BlockPos[] coords = getNeighborCoordinates(origin);
+		for (int i = 0; i < 6; i++) {
+			IBlockState state = world.getBlockState(coords[i]);
+			if (state.getBlock() instanceof PortalControllerBlock) {
+				AULog.debug("i: %d index: %d", i, state.getValue(PortalControllerBlock.FACING).getIndex());
+			}
+			if (state.getBlock() instanceof PortalControllerBlock && state.getValue(PortalControllerBlock.FACING).getIndex() == i) {result.add((PortalControllerTile) world.getTileEntity(coords[i]));}
+		}
 		return result;
 	}
 	
 	@Override
-	public void onBlockAdded(World world, int x, int y, int z) {
-		ArrayList<PortalControllerTile> controllers = this.findPortalControllers(world, x, y, z);
+	public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
+		ArrayList<PortalControllerTile> controllers = this.findPortalControllers(world, pos);
 		for (PortalControllerTile controller : controllers) {
 			controller.blockAdded();
 		}
 	}
-	
+
 	@Override
-	public void breakBlock(World world, int x, int y, int z, Block block, int meta) {
-		ArrayList<PortalControllerTile> controllers = this.findPortalControllers(world, x, y, z);
+	public void breakBlock(World world, BlockPos pos, IBlockState state) {
+		ArrayList<PortalControllerTile> controllers = this.findPortalControllers(world, pos);
 		for (PortalControllerTile controller : controllers) {
 			controller.blockRemoved();
 		}
-		super.breakBlock(world, x, y, z, block, meta);
+		super.breakBlock(world, pos, state);
 	}
-	
+
+	@Override
+	public IBlockState getStateFromMeta (int meta) {
+		return this.getDefaultState().withProperty(PortalFrameBlock.LIT, meta == 1);
+	}
+
+	@Override
+	public int getMetaFromState (IBlockState state) {
+		return state.getValue(PortalFrameBlock.LIT) ? 1 : 0;
+	}
+
+	@Override
+	protected BlockStateContainer createBlockState()
+	{
+		return new BlockStateContainer(this, PortalFrameBlock.LIT);
+	}
 }

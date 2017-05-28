@@ -1,0 +1,8 @@
+{
+  "parent": "assortedutilities:block/controller-panel",
+  "textures": {
+    "back": "assortedutilities:blocks/portalController_back",
+    "face": "assortedutilities:blocks/portalController_face",
+    "side": "assortedutilities:blocks/portalController_side"
+  }
+}

@@ -1,7 +1,6 @@
 package assortedutilities.common;
 
 import java.util.HashMap;
-
 import assortedutilities.common.handler.FallDamageHandler;
 import assortedutilities.common.handler.IFallDamageHandler;
 import assortedutilities.common.handler.IPlayerPresenceHandler;
@@ -10,8 +9,10 @@ import assortedutilities.common.util.AULog;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class ServerTicketManager implements IPlayerPresenceHandler, IFallDamageHandler {
 
@@ -19,9 +20,16 @@ public class ServerTicketManager implements IPlayerPresenceHandler, IFallDamageH
 	
 	public static final ServerTicketManager instance = new ServerTicketManager();
 	
-	public void init() {
+	void init() {
 		PlayerPresenceHandler.instance.addListener(this);
 		FallDamageHandler.instance.addListener(this);
+	}
+
+	@SubscribeEvent
+	public void onTick(TickEvent.ServerTickEvent event) {
+		for (PlayerTicketManager manager : ticketManagers.values()) {
+			manager.onTick();
+		}
 	}
 	
 	public PlayerTicketManager getManagerForPlayer(EntityPlayerMP player) {
@@ -61,8 +69,8 @@ public class ServerTicketManager implements IPlayerPresenceHandler, IFallDamageH
 
 	@Override
 	public void onWorldChange(EntityJoinWorldEvent event) {
-		if (event.entity instanceof EntityPlayerMP) {
-			EntityPlayerMP player = (EntityPlayerMP) event.entity;
+		if (event.getEntity() instanceof EntityPlayerMP) {
+			EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
 			String id = player.getUniqueID().toString();
 			PlayerTicketManager manager = ticketManagers.get(id);
 			if (manager != null) {
@@ -79,13 +87,13 @@ public class ServerTicketManager implements IPlayerPresenceHandler, IFallDamageH
 
 	@Override
 	public void onFall(LivingFallEvent event) {
-		if (event.entityLiving instanceof EntityPlayerMP) {
-			EntityPlayerMP player = (EntityPlayerMP) event.entityLiving;
+		if (event.getEntityLiving() instanceof EntityPlayerMP) {
+			EntityPlayerMP player = (EntityPlayerMP) event.getEntityLiving();
 			String id = player.getUniqueID().toString();
 			PlayerTicketManager manager = ticketManagers.get(id);
 			if (manager.getTicketCount() > manager.getFlightTicketCount()) {
 				// There is at least one falling-mode ticket, so cancel event damage.
-				event.distance = 0f;
+				event.setDistance(0f);
 				// And then clear all falling-mode tickets.
 				manager.removeFallingModeTickets();
 			}

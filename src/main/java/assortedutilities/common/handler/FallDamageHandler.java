@@ -2,11 +2,7 @@ package assortedutilities.common.handler;
 
 import java.util.ArrayList;
 
-import assortedutilities.common.util.AULog;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 
 public class FallDamageHandler {

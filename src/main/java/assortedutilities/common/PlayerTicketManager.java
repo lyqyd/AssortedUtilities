@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 import assortedutilities.common.util.AULog;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.math.BlockPos;
 
 public class PlayerTicketManager {
 
@@ -22,12 +22,12 @@ public class PlayerTicketManager {
 	}
 
 	public void update() {
-		AULog.debug("Update for player %s: %d/%d, %b", this.player.getDisplayName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
+		AULog.debug("Update for player %s: %d/%d, %b", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
 		if (this.getFlightTicketCount() > 0 && !this.player.capabilities.allowFlying) {
-			AULog.debug("Player %s granted flight, %d/%d tickets", this.player.getDisplayName(), this.getFlightTicketCount(), this.getTicketCount());
+			AULog.debug("Player %s granted flight, %d/%d tickets", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount());
 			this.player.capabilities.allowFlying = true;
 		} else if (this.getFlightTicketCount() == 0 && this.player.capabilities.allowFlying) {
-			AULog.debug("Player %s flight removed, %d/%d tickets", this.player.getDisplayName(), this.getFlightTicketCount(), this.getTicketCount());
+			AULog.debug("Player %s flight removed, %d/%d tickets", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount());
 			if(!this.player.capabilities.isCreativeMode) {
 				this.player.capabilities.allowFlying = false;
 				this.player.capabilities.isFlying = false;
@@ -38,7 +38,30 @@ public class PlayerTicketManager {
 			// Player is on ground or still has flying tickets, remove all falling-mode tickets
 			this.removeFallingModeTickets(false);
 		}
-		AULog.debug("Finalize update for player %s: %d/%d, %b", this.player.getDisplayName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
+		AULog.debug("Finalize update for player %s: %d/%d, %b", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
+	}
+
+	public void onTick() {
+		boolean flying = this.player.capabilities.allowFlying;
+		boolean update = false;
+		int flyingCount = 0;
+		for (FlightTicket t : this.ticketList) {
+			if (t.isDropping()) {
+				t.ageTicket();
+				if (t.isFalling()) {
+					update = true;
+				}
+			}
+			if (t.isFlying()) {
+				flyingCount++;
+			}
+		}
+		if ((flyingCount > 0 && !flying) || (flyingCount == 0 && flying)) {
+			update = true;
+		}
+		if (update) {
+			this.update();
+		}
 	}
 
 	public void addTicket(FlightTicket ticket) {
@@ -55,7 +78,7 @@ public class PlayerTicketManager {
 		this.update();
 	}
 
-	public void removeTicket(ChunkCoordinates location) {
+	public void removeTicket(BlockPos location) {
 		for (FlightTicket t : this.ticketList) {
 			if (t.getLocation().compareTo(location) == 0) {
 				this.ticketList.remove(t);
@@ -80,7 +103,11 @@ public class PlayerTicketManager {
 	private class FallingTickets<T> implements Predicate<FlightTicket> {
 		@Override
 		public boolean test(FlightTicket t) {
-			return t.isFalling();
+			if (t.isFalling()) {
+				t.setLanded();
+				return true;
+			}
+			return false;
 		}
 	}
 

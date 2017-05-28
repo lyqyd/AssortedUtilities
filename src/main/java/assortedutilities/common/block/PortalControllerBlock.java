@@ -1,79 +1,130 @@
 package assortedutilities.common.block;
 
 import assortedutilities.common.tileentity.PortalControllerTile;
-import assortedutilities.common.util.AULog;
-import cpw.mods.fml.common.registry.GameRegistry;
+import com.sun.istack.internal.NotNull;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.BlockPistonBase;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockStateContainer;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.EnumBlockRenderType;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.registry.GameRegistry;
+
+import javax.annotation.Nullable;
 
 public class PortalControllerBlock extends BlockContainer {
-	
-	public IIcon[] icons = new IIcon[6];
-	
-	//DUNSWE --or is it?  May be UDSNEW
-	public final int[][] rotationMatrix = {
-			{1,0,2,3,4,5},
-			{0,1,2,3,4,5},
-			{2,3,1,0,4,5},
-			{3,2,0,1,4,5},
-			{4,5,2,3,1,0},
-			{5,4,2,3,0,1},
-	};
+
+	public static final PropertyDirection FACING = PropertyDirection.create("facing");
+	public static final PropertyBool CARD_PRESENT = PropertyBool.create("card");
 
 	public PortalControllerBlock() {
-		super(Material.iron);
+		super(Material.IRON);
 		setHardness(0.5F);
-		setCreativeTab(CreativeTabs.tabTransport);
+		this.setDefaultState(this.blockState.getBaseState().withProperty(PortalControllerBlock.FACING, EnumFacing.NORTH).withProperty(PortalControllerBlock.CARD_PRESENT, false));
+		setCreativeTab(CreativeTabs.TRANSPORTATION);
+		setRegistryName("portal-controller");
+		setUnlocalizedName("portal-controller");
 		GameRegistry.registerTileEntity(PortalControllerTile.class, "portalController");
-		setBlockName("assortedutilities.portalController");
-		this.setBlockTextureName("assortedutilities:portalController");
+	}
+
+	static final AxisAlignedBB UP_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.25D, 1.0D);
+	static final AxisAlignedBB DOWN_AABB = new AxisAlignedBB(0.0D, 0.75D, 0.0D, 1.0D, 1.0D, 1.0D);
+	static final AxisAlignedBB NORTH_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.75D, 1.0D, 1.0D, 1.0D);
+	static final AxisAlignedBB SOUTH_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 0.25D);
+	static final AxisAlignedBB WEST_AABB = new AxisAlignedBB(0.75D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+	static final AxisAlignedBB EAST_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 0.25D, 1.0D, 1.0D);
+
+	@Override
+	public EnumBlockRenderType getRenderType(IBlockState state) {
+		return EnumBlockRenderType.MODEL;
+	}
+
+	@Override
+	public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face) {
+		return state.getValue(PortalControllerBlock.FACING).equals(face.getOpposite());
+	}
+
+	@Override
+	public boolean isOpaqueCube(IBlockState state) {
+		return false;
+	}
+
+	@Override
+	public boolean isFullCube(IBlockState state) {
+		return false;
+	}
+
+	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
+	{
+		switch(state.getValue(PortalControllerBlock.FACING)) {
+			case UP:
+				return UP_AABB;
+			case DOWN:
+				return DOWN_AABB;
+			case NORTH:
+				return NORTH_AABB;
+			case SOUTH:
+				return SOUTH_AABB;
+			case WEST:
+				return WEST_AABB;
+			case EAST:
+				return EAST_AABB;
+		}
+		return Block.FULL_BLOCK_AABB;
 	}
 
 	@Override
 	public TileEntity createNewTileEntity(World world, int p_149915_2_) {
 		return new PortalControllerTile();
 	}
-	
+
 	@Override
-	public void registerBlockIcons(IIconRegister register) {
-		this.icons[0] = register.registerIcon(this.textureName + "_face");
-		this.icons[1] = register.registerIcon(this.textureName + "_back");
-		for (int i = 2; i < 6; i++) {
-			this.icons[i] = register.registerIcon(this.textureName + "_side");
-		}
+	public IBlockState getStateFromMeta(int meta) {
+		int facing = meta & 7; boolean card = (meta & 8) == 8;
+		return this.getDefaultState().withProperty(PortalControllerBlock.FACING, EnumFacing.getFront(facing)).withProperty(PortalControllerBlock.CARD_PRESENT, card);
+	}
+
+	@Override
+	public int getMetaFromState (IBlockState state) {
+		return state.getValue(PortalControllerBlock.FACING).getIndex() | (state.getValue(PortalControllerBlock.CARD_PRESENT) ? 8 : 0);
+	}
+
+	public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
+		return this.getDefaultState().withProperty(FACING, BlockPistonBase.getFacingFromEntity(pos, placer));
+	}
+
+	public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
+		world.setBlockState(pos, state.withProperty(FACING, BlockPistonBase.getFacingFromEntity(pos, placer)), 2);
 	}
 	
 	@Override
-	public IIcon getIcon(int side, int meta) {
-		return this.icons[this.rotationMatrix[meta & 7][side]];
-	}
-	
-	@Override
-	public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ) {
-		TileEntity tile = world.getTileEntity(x, y, z);
+	public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
+		TileEntity tile = world.getTileEntity(pos);
 		if (tile instanceof PortalControllerTile) {
 			PortalControllerTile controller = (PortalControllerTile) tile;
-			return controller.onActivate(player);
+			return controller.onActivate(player, hand, heldItem);
 		}
 		return false;
 	}
 	
 	@Override
-	public void onBlockAdded(World world, int x, int y, int z) {
-		TileEntity tile = world.getTileEntity(x, y, z);
+	public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
+		TileEntity tile = world.getTileEntity(pos);
 		if (tile instanceof PortalControllerTile) {
 			PortalControllerTile controller = (PortalControllerTile) tile;
 			controller.onPlacement();
@@ -81,55 +132,19 @@ public class PortalControllerBlock extends BlockContainer {
 	}
 	
 	@Override
-	public void breakBlock(World world, int x, int y, int z, Block block, int meta) {
-		TileEntity tile = world.getTileEntity(x, y, z);
+	public void breakBlock(World world, BlockPos pos, IBlockState state) {
+		TileEntity tile = world.getTileEntity(pos);
 		if (tile instanceof PortalControllerTile) {
 			PortalControllerTile controller = (PortalControllerTile) tile;
 			controller.dropAll();
-			controller.onBreak(meta);
+			controller.onBreak(state.getValue(PortalControllerBlock.FACING));
 		}
-		super.breakBlock(world, x, y, z, block, meta);
+		super.breakBlock(world, pos, state);
 	}
-	
-	@Override
-	public boolean shouldSideBeRendered(IBlockAccess world, int x, int y, int z, int side) {
 
-		int mx=x, my=y, mz=z;
-	    switch(side) {
-		    case 0: my++; break;
-		    case 1: my--; break;
-  			case 2: mz++; break;
-			case 3: mz--; break;
-			case 4: mx++; break;
-			case 5: mx--; break;
-		}
-	    
-		return (this.rotationMatrix[world.getBlockMetadata(mx, my, mz) & 7][side] == 1);
-	}
-	
 	@Override
-	public boolean isOpaqueCube() {
-		return false;
-	}
-	
-	@Override
-	public boolean renderAsNormalBlock() {
-		return false;
-	}
-	
-	@Override
-	public void setBlockBoundsBasedOnState(IBlockAccess world, int x, int y, int z) {
-		int meta = world.getBlockMetadata(x, y, z) & 7;
-		
-		float[][] bounds = {
-			{0f, 0f, 0f, 1f, 0.45f, 1f},
-			{0f, 0.55f, 0f, 1f, 1f, 1f},
-			{0f, 0f, 0f, 1f, 1f, 0.45f},
-			{0f, 0f, 0.55f, 1f, 1f, 1f},
-			{0f, 0f, 0f, 0.45f, 1f, 1f},
-			{0.55f, 0f, 0f, 1f, 1f, 1f},
-		};
-		
-		this.setBlockBounds(bounds[meta][0], bounds[meta][1], bounds[meta][2], bounds[meta][3], bounds[meta][4], bounds[meta][5]);
+	protected BlockStateContainer createBlockState()
+	{
+		return new BlockStateContainer(this, PortalControllerBlock.FACING, PortalControllerBlock.CARD_PRESENT);
 	}
 }

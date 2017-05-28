@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=1": { "model": "assortedutilities:portal_ew" },
+    "axis=2": { "model": "assortedutilities:portal_ud" },
+    "axis=3": { "model": "assortedutilities:portal_ns" }
+  }
+}

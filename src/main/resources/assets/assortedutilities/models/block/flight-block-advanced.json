@@ -1,0 +1,8 @@
+{
+  "parent": "assortedutilities:block/top-bottom-sides",
+  "textures": {
+    "bottom": "assortedutilities:blocks/flightblock_bottom",
+    "side": "assortedutilities:blocks/flightblock_side",
+    "top": "assortedutilities:blocks/flightblock_top"
+  }
+}

@@ -1,22 +1,26 @@
 package assortedutilities.client;
 
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.client.MinecraftForgeClient;
-import cpw.mods.fml.client.registry.ClientRegistry;
-import cpw.mods.fml.client.registry.RenderingRegistry;
 import assortedutilities.AssortedUtilities;
-import assortedutilities.client.renderer.ObliteratorRenderer;
-import assortedutilities.client.renderer.PortalControllerRenderer;
 import assortedutilities.common.CommonProxy;
-import assortedutilities.common.tileentity.PortalControllerTile;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.item.Item;
+import net.minecraftforge.client.model.ModelLoader;
 
 public class ClientProxy extends CommonProxy {
 
 	@Override
 	public void registerRenderInformation() {
-		RenderingRegistry.registerBlockHandler(new ObliteratorRenderer());
-		PortalControllerRenderer controlRender = new PortalControllerRenderer();
-		ClientRegistry.bindTileEntitySpecialRenderer(PortalControllerTile.class, controlRender);
-		MinecraftForgeClient.registerItemRenderer(new ItemStack(AssortedUtilities.Blocks.portalControllerBlock).getItem(), controlRender);
+		ModelResourceLocation loc = new ModelResourceLocation("assortedutilities:portal-location-item", "inventory");
+		ModelLoader.setCustomModelResourceLocation(AssortedUtilities.Items.locationCard, 0, loc);
+		loc = new ModelResourceLocation("assortedutilities:obliterator", "inventory");
+		ModelLoader.setCustomModelResourceLocation(Item.REGISTRY.getObject(AssortedUtilities.Blocks.obliteratorBlock.getRegistryName()), 0, loc);
+		loc = new ModelResourceLocation("assortedutilities:flight-block-advanced", "inventory");
+		ModelLoader.setCustomModelResourceLocation(Item.REGISTRY.getObject(AssortedUtilities.Blocks.flightBlockAdv.getRegistryName()), 0, loc);
+		loc = new ModelResourceLocation("assortedutilities:flight-block-basic", "inventory");
+		ModelLoader.setCustomModelResourceLocation(Item.REGISTRY.getObject(AssortedUtilities.Blocks.flightBlockBsc.getRegistryName()), 0, loc);
+		loc = new ModelResourceLocation("assortedutilities:portal-controller", "inventory");
+		ModelLoader.setCustomModelResourceLocation(Item.REGISTRY.getObject(AssortedUtilities.Blocks.portalControllerBlock.getRegistryName()), 0, loc);
+		loc = new ModelResourceLocation("assortedutilities:portal-frame", "inventory");
+		ModelLoader.setCustomModelResourceLocation(Item.REGISTRY.getObject(AssortedUtilities.Blocks.portalFrameBlock.getRegistryName()), 0, loc);
 	}
 }
