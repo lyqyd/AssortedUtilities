@@ -182,13 +182,17 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	
 	private void lightRing() {
 		for (BlockPos location : this.ring) {
-			worldObj.setBlockState(location, worldObj.getBlockState(location).withProperty(PortalFrameBlock.LIT, true), 3);
+			if (worldObj.getBlockState(location).getBlock() instanceof PortalFrameBlock) {
+				worldObj.setBlockState(location, worldObj.getBlockState(location).withProperty(PortalFrameBlock.LIT, true), 3);
+			}
 		}
 	}
 	
 	private void extinguishRing() {
 		for (BlockPos location : this.ring) {
-			worldObj.setBlockState(location, worldObj.getBlockState(location).withProperty(PortalFrameBlock.LIT, false), 3);
+			if (worldObj.getBlockState(location).getBlock() instanceof PortalFrameBlock) {
+				worldObj.setBlockState(location, worldObj.getBlockState(location).withProperty(PortalFrameBlock.LIT, false), 3);
+			}
 		}
 	}
 	
