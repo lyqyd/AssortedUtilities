@@ -45,14 +45,14 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	}
 
 	public void update() {
-		if (!worldObj.isRemote) {
+		if (!world.isRemote) {
 			if (updateCard) {
 				AULog.debug("Updating card state");
 				if (this.inventory.getStackInSlot(0) != null) {
-					worldObj.setBlockState(pos, worldObj.getBlockState(pos).withProperty(PortalControllerBlock.CARD_PRESENT, true), 3);
+					world.setBlockState(pos, world.getBlockState(pos).withProperty(PortalControllerBlock.CARD_PRESENT, true), 3);
 					AULog.debug("Set card presence true");
 				} else {
-					worldObj.setBlockState(pos, worldObj.getBlockState(pos).withProperty(PortalControllerBlock.CARD_PRESENT, false), 3);
+					world.setBlockState(pos, world.getBlockState(pos).withProperty(PortalControllerBlock.CARD_PRESENT, false), 3);
 					AULog.debug("Set card presence false");
 				}
 				this.markDirty();
@@ -82,7 +82,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 						IPortalLocation location = (IPortalLocation) stack.getItem();
 						int dim = location.getDimension(stack);
 						Vec3d dest = location.getLocation(stack);
-						double x = dest.xCoord, y = dest.yCoord, z = dest.zCoord;
+						double x = dest.x, y = dest.y, z = dest.z;
 						float yaw = location.getYaw(stack);
 						if (portalSpaceClear()) {
 							lightPortal(meta, x, y, z, dim, yaw);
@@ -102,11 +102,11 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	}
 
 	public boolean onActivate(EntityPlayer player, EnumHand hand, @Nullable ItemStack heldItem) {
-		if (!worldObj.isRemote && hand == EnumHand.MAIN_HAND) {
+		if (!world.isRemote && hand == EnumHand.MAIN_HAND) {
 			if (inventory.getStackInSlot(0) != null && heldItem == null) {
 				//drop card to player
 				player.setHeldItem(hand, this.decrStackSize(0, 1));
-			} else if (inventory.getStackInSlot(0) == null && heldItem != null && heldItem.getItem() instanceof PortalLocationItem && heldItem.stackSize == 1) {
+			} else if (inventory.getStackInSlot(0) == null && heldItem != null && heldItem.getItem() instanceof PortalLocationItem && heldItem.getCount() == 1) {
 				//our inventory is empty and they have a card for us!
 				this.setInventorySlotContents(0, heldItem.copy());
 				player.setHeldItem(hand, null);
@@ -120,7 +120,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	public void readFromNBT(NBTTagCompound tag) {
 		super.readFromNBT(tag);
 		NBTTagCompound item = tag.getCompoundTag("item");
-		inventory.setInventorySlotContents(0, ItemStack.loadItemStackFromNBT(item));
+		inventory.setInventorySlotContents(0, new ItemStack(item));
 		portalLit = tag.getBoolean("portalLit");
 		this.markDirty();
 	}
@@ -146,12 +146,12 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 				{-1, 0, 0},
 				{1, 0, 0},
 		};
-		EnumFacing facing = worldObj.getBlockState(pos).getValue(PortalControllerBlock.FACING);
+		EnumFacing facing = world.getBlockState(pos).getValue(PortalControllerBlock.FACING);
 		BlockPos start = pos.offset(facing.getOpposite());
 
-		IBlockState currBlock = worldObj.getBlockState(start);
+		IBlockState currBlock = world.getBlockState(start);
 		if (currBlock.getBlock() instanceof PortalFrameBlock) {
-			ArrayList<BlockPos> result = findPortalFrameRing(worldObj, start);
+			ArrayList<BlockPos> result = findPortalFrameRing(world, start);
 			if (result != null) {
 				ring = result;
 				interior = findInteriorBlocks(ring);
@@ -172,7 +172,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 
 	private boolean portalSpaceClear() {
 		for (BlockPos location : this.interior){
-			if (!worldObj.isAirBlock(location)){
+			if (!world.isAirBlock(location)){
 				return false;
 			}
 		}
@@ -181,16 +181,16 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	
 	private void lightRing() {
 		for (BlockPos location : this.ring) {
-			if (worldObj.getBlockState(location).getBlock() instanceof PortalFrameBlock) {
-				worldObj.setBlockState(location, worldObj.getBlockState(location).withProperty(PortalFrameBlock.LIT, true), 3);
+			if (world.getBlockState(location).getBlock() instanceof PortalFrameBlock) {
+				world.setBlockState(location, world.getBlockState(location).withProperty(PortalFrameBlock.LIT, true), 3);
 			}
 		}
 	}
 	
 	private void extinguishRing() {
 		for (BlockPos location : this.ring) {
-			if (worldObj.getBlockState(location).getBlock() instanceof PortalFrameBlock) {
-				worldObj.setBlockState(location, worldObj.getBlockState(location).withProperty(PortalFrameBlock.LIT, false), 3);
+			if (world.getBlockState(location).getBlock() instanceof PortalFrameBlock) {
+				world.setBlockState(location, world.getBlockState(location).withProperty(PortalFrameBlock.LIT, false), 3);
 			}
 		}
 	}
@@ -198,8 +198,8 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	private void lightPortal(int meta, double x, double y, double z, int dim, float yaw) {
 		AULog.debug("Setting up portal blocks");
 		for (BlockPos portal : this.interior) {
-			worldObj.setBlockState(portal, AssortedUtilities.Blocks.portalBlock.getDefaultState().withProperty(PortalBlock.AXIS, meta), 3);
-			TileEntity tile = worldObj.getTileEntity(portal);
+			world.setBlockState(portal, AssortedUtilities.Blocks.portalBlock.getDefaultState().withProperty(PortalBlock.AXIS, meta), 3);
+			TileEntity tile = world.getTileEntity(portal);
 			if (tile instanceof PortalTile) {
 				((PortalTile)tile).setDestination(x, y, z, dim, yaw);
 			}
@@ -210,7 +210,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	private void extinguishPortal() {
 		AULog.debug("Destroying portal blocks");
 		for (BlockPos portal : this.interior) {
-			worldObj.setBlockToAir(portal);
+			world.setBlockToAir(portal);
 		}
 		portalLit = false;
 	}
@@ -259,9 +259,9 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 				boolean inside = false;
 				int sidesFlag = 0;
 				for (int z = minZ; z <= maxZ; z++) {
-					if (worldObj.getBlockState(new BlockPos(minX, y, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(minX, y, z))) {
-						if (worldObj.getBlockState(new BlockPos(minX, y - 1, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(minX, y - 1, z))) {sidesFlag = sidesFlag | 1;}
-						if (worldObj.getBlockState(new BlockPos(minX, y + 1, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(minX, y + 1, z))) {sidesFlag = sidesFlag | 2;}
+					if (world.getBlockState(new BlockPos(minX, y, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(minX, y, z))) {
+						if (world.getBlockState(new BlockPos(minX, y - 1, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(minX, y - 1, z))) {sidesFlag = sidesFlag | 1;}
+						if (world.getBlockState(new BlockPos(minX, y + 1, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(minX, y + 1, z))) {sidesFlag = sidesFlag | 2;}
 						if (sidesFlag == 3) {
 							inside = !inside;
 						}
@@ -278,9 +278,9 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 				boolean inside = false;
 				int sidesFlag = 0;
 				for (int z = minZ; z <= maxZ; z++) {
-					if (worldObj.getBlockState(new BlockPos(x, minY, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x, minY, z))) {
-						if (worldObj.getBlockState(new BlockPos(x - 1, minY, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x - 1, minY, z))) {sidesFlag = sidesFlag | 1;}
-						if (worldObj.getBlockState(new BlockPos(x + 1, minY, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x + 1, minY, z))) {sidesFlag = sidesFlag | 2;}
+					if (world.getBlockState(new BlockPos(x, minY, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x, minY, z))) {
+						if (world.getBlockState(new BlockPos(x - 1, minY, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x - 1, minY, z))) {sidesFlag = sidesFlag | 1;}
+						if (world.getBlockState(new BlockPos(x + 1, minY, z)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x + 1, minY, z))) {sidesFlag = sidesFlag | 2;}
 						if (sidesFlag == 3) {
 							inside = !inside;
 						}
@@ -296,9 +296,9 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 				boolean inside = false;
 				int sidesFlag = 0;
 				for (int y = minY; y <= maxY; y++) {
-					if (worldObj.getBlockState(new BlockPos(x, y, minZ)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x, y, minZ))) {
-						if (worldObj.getBlockState(new BlockPos(x - 1, y, minZ)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x - 1, y, minZ))) {sidesFlag = sidesFlag | 1;}
-						if (worldObj.getBlockState(new BlockPos(x + 1, y, minZ)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x + 1, y, minZ))) {sidesFlag = sidesFlag | 2;}
+					if (world.getBlockState(new BlockPos(x, y, minZ)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x, y, minZ))) {
+						if (world.getBlockState(new BlockPos(x - 1, y, minZ)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x - 1, y, minZ))) {sidesFlag = sidesFlag | 1;}
+						if (world.getBlockState(new BlockPos(x + 1, y, minZ)).getBlock() instanceof PortalFrameBlock && frameBlocks.contains(new BlockPos(x + 1, y, minZ))) {sidesFlag = sidesFlag | 2;}
 						if (sidesFlag == 3) {
 							inside = !inside;
 						}
@@ -396,25 +396,25 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	}
 
 	public void blockAdded() {
-		if (!worldObj.isRemote) {
+		if (!world.isRemote) {
 			updateFrame = true;
 		}
 	}
 	
 	public void blockRemoved() {
-		if (!worldObj.isRemote) {
+		if (!world.isRemote) {
 			updateFrame = true;
 		}
 	}
 
 	public void onPlacement() {
-		if (!worldObj.isRemote) {
+		if (!world.isRemote) {
 			updateFrame = true;
 		}
 	}
 
 	public void onBreak(EnumFacing facing) {
-		if (!worldObj.isRemote) {
+		if (!world.isRemote) {
 			BlockPos start = null;
 			if (!ring.isEmpty()) {
 				if (portalLit) {
@@ -424,7 +424,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 			}
 			if (start != null) {
 				AULog.debug("Got a starting point");
-				ArrayList<PortalControllerTile> controllers = findPortalControllers(worldObj, start);
+				ArrayList<PortalControllerTile> controllers = findPortalControllers(world, start);
 				AULog.debug("Controllers size was %d", controllers.size());
 				if (controllers.size() == 0) {
 					extinguishRing();
@@ -434,17 +434,22 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	}
 	
 	public void dropAll() {
-	    if (!worldObj.isRemote && this.getStackInSlot(0) != null) {
-		    ItemStack drop = this.decrStackSize(0, this.getStackInSlot(0).stackSize);
-		    EntityItem dropItem = new EntityItem(worldObj, this.pos.getX(), this.pos.getY() + 0.2f, this.pos.getZ(), drop);
+	    if (!world.isRemote && this.getStackInSlot(0) != null) {
+		    ItemStack drop = this.decrStackSize(0, this.getStackInSlot(0).getCount());
+		    EntityItem dropItem = new EntityItem(world, this.pos.getX(), this.pos.getY() + 0.2f, this.pos.getZ(), drop);
 		    dropItem.setPickupDelay(10);
-		    worldObj.spawnEntityInWorld(dropItem);
+		    world.spawnEntity(dropItem);
 	    }
    }
 
 	@Override
 	public int getSizeInventory() {
 		return inventory.getSizeInventory();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return this.getStackInSlot(0) == null || this.getStackInSlot(0).equals(ItemStack.EMPTY);
 	}
 
 	@Override
@@ -465,7 +470,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	@Override
 	public ItemStack removeStackFromSlot(int index) {
 		if (inventory.getStackInSlot(index) == null) {return null;}
-		return inventory.decrStackSize(index, inventory.getStackInSlot(index).stackSize);
+		return inventory.decrStackSize(index, inventory.getStackInSlot(index).getCount());
 	}
 
 	@Override
@@ -485,7 +490,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 	}
 
 	@Override
-	public boolean isUseableByPlayer(EntityPlayer player) {
+	public boolean isUsableByPlayer(EntityPlayer player) {
 		return false;
 	}
 
@@ -501,7 +506,7 @@ public class PortalControllerTile extends TileEntity implements IInventory, ITic
 
 	@Override
 	public boolean isItemValidForSlot(int slot, ItemStack stack) {
-		if (stack == null || (slot == 0 && stack.getItem() instanceof PortalLocationItem && stack.stackSize <= 1)) {
+		if (stack == null || (slot == 0 && stack.getItem() instanceof PortalLocationItem && stack.getCount() <= 1)) {
 			return true;
 		}
 		return false;
