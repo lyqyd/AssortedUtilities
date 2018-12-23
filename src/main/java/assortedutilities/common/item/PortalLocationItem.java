@@ -29,24 +29,25 @@ public class PortalLocationItem extends Item implements IPortalLocation {
 	public String getUnlocalizedName(ItemStack stack) {
 		return "item.portal-location-item";
 	}
-	
+
 	@Override
-	public ActionResult<ItemStack> onItemRightClick(ItemStack stack, World world, EntityPlayer player, EnumHand hand) {
+	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+		ItemStack stack = player.getHeldItem(hand);
 		if (stack.getTagCompound() != null) {return new ActionResult(EnumActionResult.PASS, stack);}
-		if (stack.stackSize == 1 || player.inventory.getFirstEmptyStack() > -1) {
+		if (stack.getCount() == 1 || player.inventory.getFirstEmptyStack() > -1) {
 			ItemStack card = stack.splitStack(1);
 			if (!world.isRemote) {
 				NBTTagCompound tag = new NBTTagCompound();
-				tag.setInteger("dim", player.worldObj.provider.getDimension());
+				tag.setInteger("dim", player.world.provider.getDimension());
 				tag.setDouble("x", player.posX);
 				tag.setDouble("y", player.posY);
 				tag.setDouble("z", player.posZ);
 				tag.setFloat("yaw", player.rotationYaw);
 				card.setTagCompound(tag);
-				AULog.debug("Card created with attributes %f %f %f in dim %d", player.posX, player.posY, player.posZ, player.worldObj.provider.getDimension());
+				AULog.debug("Card created with attributes %f %f %f in dim %d", player.posX, player.posY, player.posZ, player.world.provider.getDimension());
 				EntityItem dropItem = new EntityItem(world, player.posX, player.posY, player.posZ, card);
 				dropItem.setNoPickupDelay();
-				world.spawnEntityInWorld(dropItem);
+				world.spawnEntity(dropItem);
 			}
 		}
 		return new ActionResult(EnumActionResult.PASS, stack);
