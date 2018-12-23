@@ -31,9 +31,9 @@ public class PortalTile extends TileEntity {
 	public void onCollide(Entity entity) {
 		EntityPlayerMP player = null;
 		if (entity instanceof EntityPlayerMP) {player = (EntityPlayerMP) entity;}
-		if (!worldObj.isRemote && destination != null) {
+		if (!world.isRemote && destination != null) {
 			if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(entity, destDimension)) return;
-			double x = destination.xCoord, y = destination.yCoord, z = destination.zCoord;
+			double x = destination.x, y = destination.y, z = destination.z;
 			int oldDimension = entity.dimension;
 			AULog.debug("Initialize teleport");
 			if (player != null) {
@@ -50,8 +50,8 @@ public class PortalTile extends TileEntity {
 			}
 
 			MinecraftServer server = entity.getServer();
-			WorldServer worldserver = server.worldServerForDimension(oldDimension);
-			WorldServer worldserver1 = server.worldServerForDimension(destDimension);
+			WorldServer worldserver = server.getWorld(oldDimension);
+			WorldServer worldserver1 = server.getWorld(destDimension);
 			if (entity.dimension != destDimension) {
 				AULog.debug("Entity isn't in target dimension");
 				PlayerList list = server.getPlayerList();
@@ -66,16 +66,16 @@ public class PortalTile extends TileEntity {
 				}
 
 				//begin transfer-entity-to-world
-				worldserver.theProfiler.startSection("placing");
+				worldserver.profiler.startSection("placing");
 				AULog.debug("Setting entity position and angles");
 				entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
-				worldserver1.spawnEntityInWorld(entity);
+				worldserver1.spawnEntity(entity);
 				if (player != null) {player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);}
 				worldserver1.updateEntityWithOptionalForce(entity, false);
 
 				if (entity.isEntityAlive() && player == null) {
-					this.worldObj.theProfiler.startSection("reloading");
-					Entity newEntity = EntityList.createEntityByName(EntityList.getEntityString(entity), worldserver1);
+					this.world.profiler.startSection("reloading");
+					Entity newEntity = EntityList.createEntityByIDFromName(EntityList.getKey(entity), worldserver1);
 
 					if (newEntity != null) {
 						NBTTagCompound tag = entity.writeToNBT(new NBTTagCompound());
@@ -87,16 +87,16 @@ public class PortalTile extends TileEntity {
 
 						boolean flag = newEntity.forceSpawn;
 						newEntity.forceSpawn = true;
-						worldserver1.spawnEntityInWorld(newEntity);
+						worldserver1.spawnEntity(newEntity);
 						newEntity.forceSpawn = flag;
 						worldserver1.updateEntityWithOptionalForce(newEntity, true);
 					}
 
 					entity.isDead = true;
-					this.worldObj.theProfiler.endSection();
+					this.world.profiler.endSection();
 				}
 
-				worldserver.theProfiler.endSection();
+				worldserver.profiler.endSection();
 				entity.setWorld(worldserver1);
 				//end transfer-entity-to-world
 
@@ -146,9 +146,9 @@ public class PortalTile extends TileEntity {
 	public NBTTagCompound writeToNBT(NBTTagCompound tag) {
 		tag = super.writeToNBT(tag);
 		NBTTagCompound dest = new NBTTagCompound();
-		dest.setDouble("x", destination.xCoord);
-		dest.setDouble("y", destination.yCoord);
-		dest.setDouble("z", destination.zCoord);
+		dest.setDouble("x", destination.x);
+		dest.setDouble("y", destination.y);
+		dest.setDouble("z", destination.z);
 		dest.setFloat("yaw", yaw);
 		dest.setInteger("dim", destDimension);
 		tag.setTag("destination", dest);
