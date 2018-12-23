@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketEntityEffect;
 import net.minecraft.network.play.server.SPacketPlayerAbilities;
+import net.minecraft.network.play.server.SPacketPlayerPosLook;
 import net.minecraft.network.play.server.SPacketRespawn;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
@@ -19,100 +20,34 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.reflect.Field;
+import java.util.*;
 
 public class PortalTile extends TileEntity {
 	
 	private Vec3d destination;
 	private int destDimension = 0;
 	private float yaw;
-	
-	/*public void onCollide(Entity entity) {
-		AULog.debug("World Remote: %b; Destination Null: %b", worldObj.isRemote, destination == null);
-		if (!worldObj.isRemote && destination != null) {
-			int oldDimension = entity.dimension;
-			EntityPlayerMP player = null;
-			if(entity instanceof EntityPlayerMP) {
-				player = (EntityPlayerMP) entity;
-			}
-			MinecraftServer server = entity.getServer();
-			WorldServer worldserver = server.worldServerForDimension(entity.dimension);
-
-			double x = destination.xCoord, y = destination.yCoord, z = destination.zCoord;
-			if (entity.dimension == destDimension) {
-				AULog.debug("Traveling to %f, %f, %f in same dimension", x, y, z);
-				entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
-				if (player != null) {player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);}
-				worldserver.updateEntityWithOptionalForce(entity, false);
-			} else {
-				if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(entity, destDimension)) return;
-
-				AULog.debug("Traveling to %f, %f, %f in dim %d", x, y, z, destDimension);
-
-				this.worldObj.theProfiler.startSection("changeDimension");
-				WorldServer worldserver1 = server.worldServerForDimension(destDimension);
-
-				entity.dimension = destDimension;
-				player.connection.sendPacket(new SPacketRespawn(player.dimension, worldserver1.getDifficulty(), worldserver1.getWorldInfo().getTerrainType(), player.interactionManager.getGameType()));
-				PlayerList list = server.getPlayerList();
-				list.updatePermissionLevel(player);
-				worldserver.removeEntityDangerously(player);
-				this.worldObj.removeEntity(entity);
-				entity.isDead = false;
-				this.worldObj.theProfiler.startSection("reposition");
-				entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
-				worldserver.updateEntityWithOptionalForce(entity, false);
-				if (player != null) {
-					list.preparePlayer(player, worldserver);
-					player.connection.setPlayerLocation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
-					player.interactionManager.setWorld(worldserver1);
-					player.connection.sendPacket(new SPacketPlayerAbilities(player.capabilities));
-					list.updateTimeAndWeatherForPlayer(player, worldserver1);
-					list.syncPlayerInventory(player);
-
-					for (PotionEffect potioneffect : player.getActivePotionEffects())
-					{
-						player.connection.sendPacket(new SPacketEntityEffect(player.getEntityId(), potioneffect));
-					}
-					net.minecraftforge.fml.common.FMLCommonHandler.instance().firePlayerChangedDimensionEvent(player, oldDimension, destDimension);
-				}
-
-				this.worldObj.theProfiler.startSection("reloading");
-				Entity newEntity = EntityList.createEntityByName(EntityList.getEntityString(entity), worldserver1);
-
-				if (newEntity != null) {
-					NBTTagCompound tag = entity.writeToNBT(new NBTTagCompound());
-					tag.removeTag("Dimension");
-					newEntity.readFromNBT(tag);
-
-					newEntity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
-
-					boolean flag = newEntity.forceSpawn;
-					newEntity.forceSpawn = true;
-					worldserver1.spawnEntityInWorld(newEntity);
-					newEntity.forceSpawn = flag;
-					worldserver1.updateEntityWithOptionalForce(newEntity, true);
-				}
-
-				entity.isDead = true;
-				this.worldObj.theProfiler.endSection();
-				worldserver.resetUpdateEntityTick();
-				worldserver1.resetUpdateEntityTick();
-				this.worldObj.theProfiler.endSection();
-			}
-			AULog.debug("Travel Complete");
-		}
-	}*/
 
 	public void onCollide(Entity entity) {
+		EntityPlayerMP player = null;
+		if (entity instanceof EntityPlayerMP) {player = (EntityPlayerMP) entity;}
 		if (!worldObj.isRemote && destination != null) {
 			if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(entity, destDimension)) return;
 			double x = destination.xCoord, y = destination.yCoord, z = destination.zCoord;
 			int oldDimension = entity.dimension;
 			AULog.debug("Initialize teleport");
-			entity.motionX = entity.motionY = entity.motionZ = 0.0D;
-			entity.setPosition(x, y, z);
-			EntityPlayerMP player = null;
-			if (entity instanceof EntityPlayerMP) {player = (EntityPlayerMP) entity;}
+			if (player != null) {
+				//Terrible, awful, reflection to set necessary fields in the player. Don't try this at home.
+				try {
+					Field invuln = ReflectionHelper.findField(EntityPlayerMP.class, "invulnerableDimensionChange", "field_184851_cj");
+					invuln.setAccessible(true);
+					invuln.set(player, true);
+				} catch (ReflectionHelper.UnableToFindFieldException e) {
+					AULog.warn("Cannot find invulnerability field!");
+				} catch (IllegalAccessException e) {
+					AULog.warn("Cannot access invulnerability field!");
+				}
+			}
 
 			MinecraftServer server = entity.getServer();
 			WorldServer worldserver = server.worldServerForDimension(oldDimension);
@@ -120,19 +55,6 @@ public class PortalTile extends TileEntity {
 			if (entity.dimension != destDimension) {
 				AULog.debug("Entity isn't in target dimension");
 				PlayerList list = server.getPlayerList();
-
-				if (player != null) {
-					//Terrible, awful, reflection to set necesary fields in the player. Don't try this at home.
-					try {
-						Field invuln = ReflectionHelper.findField(EntityPlayerMP.class, "invulnerableDimensionChange", "field_184851_cj");
-						invuln.setAccessible(true);
-						invuln.set(player, true);
-					} catch (ReflectionHelper.UnableToFindFieldException e) {
-						AULog.warn("Cannot find invulnerability field!");
-					} catch (IllegalAccessException e) {
-						AULog.warn("Cannot access invulnerability field!");
-					}
-				}
 
 				entity.dimension = destDimension;
 				if (player != null) {
@@ -145,8 +67,10 @@ public class PortalTile extends TileEntity {
 
 				//begin transfer-entity-to-world
 				worldserver.theProfiler.startSection("placing");
+				AULog.debug("Setting entity position and angles");
 				entity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
 				worldserver1.spawnEntityInWorld(entity);
+				if (player != null) {player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);}
 				worldserver1.updateEntityWithOptionalForce(entity, false);
 
 				if (entity.isEntityAlive() && player == null) {
@@ -158,6 +82,7 @@ public class PortalTile extends TileEntity {
 						tag.removeTag("Dimension");
 						newEntity.readFromNBT(tag);
 
+						AULog.debug("Setting new entity position and angles");
 						newEntity.setLocationAndAngles(x, y, z, yaw, entity.rotationPitch);
 
 						boolean flag = newEntity.forceSpawn;
@@ -177,6 +102,7 @@ public class PortalTile extends TileEntity {
 
 				if (player != null) {
 					list.preparePlayer(player, worldserver);
+					AULog.debug("Setting player position and angles");
 					player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);
 					player.interactionManager.setWorld(worldserver1);
 					player.connection.sendPacket(new SPacketPlayerAbilities(player.capabilities));
@@ -198,6 +124,7 @@ public class PortalTile extends TileEntity {
 				entity.setPosition(x, y, z);
 				worldserver1.updateEntityWithOptionalForce(entity, false);
 			}
+			AULog.debug("Teleport complete");
 		}
 	}
 

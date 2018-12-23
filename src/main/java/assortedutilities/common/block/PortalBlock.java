@@ -4,7 +4,6 @@ import assortedutilities.common.tileentity.PortalTile;
 import assortedutilities.common.util.AULog;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
@@ -20,7 +19,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 import javax.annotation.Nullable;
 
 public class PortalBlock extends BlockContainer {
@@ -60,8 +58,14 @@ public class PortalBlock extends BlockContainer {
 		return NULL_AABB;
 	}
 
+	@Override
 	public boolean isFullCube(IBlockState state)
 	{
+		return false;
+	}
+
+	@Override
+	public boolean isOpaqueCube(IBlockState state) {
 		return false;
 	}
 

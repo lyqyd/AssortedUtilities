@@ -22,12 +22,12 @@ public class PlayerTicketManager {
 	}
 
 	public void update() {
-		AULog.debug("Update for player %s: %d/%d, %b", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
+		//AULog.debug("Update for player %s: %d/%d, %b", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
 		if (this.getFlightTicketCount() > 0 && !this.player.capabilities.allowFlying) {
-			AULog.debug("Player %s granted flight, %d/%d tickets", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount());
+			//AULog.debug("Player %s granted flight, %d/%d tickets", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount());
 			this.player.capabilities.allowFlying = true;
 		} else if (this.getFlightTicketCount() == 0 && this.player.capabilities.allowFlying) {
-			AULog.debug("Player %s flight removed, %d/%d tickets", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount());
+			//AULog.debug("Player %s flight removed, %d/%d tickets", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount());
 			if(!this.player.capabilities.isCreativeMode) {
 				this.player.capabilities.allowFlying = false;
 				this.player.capabilities.isFlying = false;
@@ -38,7 +38,7 @@ public class PlayerTicketManager {
 			// Player is on ground or still has flying tickets, remove all falling-mode tickets
 			this.removeFallingModeTickets(false);
 		}
-		AULog.debug("Finalize update for player %s: %d/%d, %b", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
+		//AULog.debug("Finalize update for player %s: %d/%d, %b", this.player.getName(), this.getFlightTicketCount(), this.getTicketCount(), this.player.capabilities.allowFlying);
 	}
 
 	public void onTick() {
