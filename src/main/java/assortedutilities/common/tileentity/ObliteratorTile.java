@@ -13,17 +13,17 @@ import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 public class ObliteratorTile extends TileEntity implements ITickable {
 
 	public void update() {
-		if(!worldObj.isRemote) {
-			BlockPos target = pos.offset(this.worldObj.getBlockState(pos).getValue(ObliteratorBlock.FACING));
-			IBlockState blockState = this.worldObj.getBlockState(target);
-			if (blockState != null && !this.worldObj.isAirBlock(target) && blockState.getBlockHardness(worldObj, target) >= 0) {
-				BreakEvent breakEvent = new BreakEvent(this.worldObj, target, blockState, AssortedUtilities.proxy.getPlayer((WorldServer) this.worldObj).get());
+		if(!world.isRemote) {
+			BlockPos target = pos.offset(this.world.getBlockState(pos).getValue(ObliteratorBlock.FACING));
+			IBlockState blockState = this.world.getBlockState(target);
+			if (blockState != null && !this.world.isAirBlock(target) && blockState.getBlockHardness(world, target) >= 0) {
+				BreakEvent breakEvent = new BreakEvent(this.world, target, blockState, AssortedUtilities.proxy.getPlayer((WorldServer) this.world).get());
 				MinecraftForge.EVENT_BUS.post(breakEvent);
 				if (breakEvent.isCanceled()) {
 					return;
 				}
 			}
-			this.worldObj.setBlockToAir(target);
+			this.world.setBlockToAir(target);
 		}
 	}
 }
