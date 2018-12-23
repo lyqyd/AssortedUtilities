@@ -1,0 +1,13 @@
+{
+    "type": "minecraft:crafting_shapeless",
+    "ingredients": [
+        {
+            "item": "asssortedutilities:portal-location-item"
+        }
+    ],
+    "result":
+    {
+        "item": "asssortedutilities:portal-location-item",
+        "count": 1
+    }
+}

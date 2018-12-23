@@ -4,11 +4,18 @@ import assortedutilities.AssortedUtilities;
 import assortedutilities.common.block.*;
 import assortedutilities.common.item.PortalLocationItem;
 import assortedutilities.common.util.AULog;
+import com.google.common.collect.Lists;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
+
 import java.util.ArrayList;
 
 public class RegisterEventHandler {
@@ -67,6 +74,57 @@ public class RegisterEventHandler {
 			blockItems[i] = new ItemBlock(block);
 			blockItems[i].setRegistryName(block.getRegistryName());
 			i++;
+		}
+	}
+
+	protected static void removeRecipes() {
+		ForgeRegistry<IRecipe> recipeRegistry = (ForgeRegistry<IRecipe>) ForgeRegistries.RECIPES;
+		ArrayList<IRecipe> recipes = Lists.newArrayList(recipeRegistry.getValuesCollection());
+
+		for (IRecipe r : recipes)
+		{
+			ItemStack output = r.getRecipeOutput();
+			if (!AssortedUtilities.Config.obliteratorRecipeEnabled) {
+				if (output.getItem() == Item.getItemFromBlock(AssortedUtilities.Blocks.obliteratorBlock)) {
+					recipeRegistry.remove(r.getRegistryName());
+				}
+			}
+			if (!AssortedUtilities.Config.portalFrameRecipeEnabled) {
+				if (output.getItem() == Item.getItemFromBlock(AssortedUtilities.Blocks.portalFrameBlock)) {
+					recipeRegistry.remove(r.getRegistryName());
+				}
+			}
+			if (!AssortedUtilities.Config.portalControllerRecipeEnabled) {
+				if (output.getItem() == Item.getItemFromBlock(AssortedUtilities.Blocks.portalControllerBlock)) {
+					recipeRegistry.remove(r.getRegistryName());
+				}
+			}
+			if (!AssortedUtilities.Config.portalLocationCardRecipeEnabled) {
+				if (output.getItem() == AssortedUtilities.Items.locationCard) {
+					recipeRegistry.remove(r.getRegistryName());
+				}
+			}
+			if (!AssortedUtilities.Config.portalLocationCardResetRecipeEnabled) {
+				if (output.getItem() == AssortedUtilities.Items.locationCard) {
+					for (Ingredient i : r.getIngredients()) {
+						for (ItemStack stack : i.getMatchingStacks()) {
+							if (stack.equals(new ItemStack(AssortedUtilities.Items.locationCard, 1))) {
+								recipeRegistry.remove(r.getRegistryName());
+							}
+						}
+					}
+				}
+			}
+			if (!AssortedUtilities.Config.enableAdvancedRecipe) {
+				if (output.getItem() == Item.getItemFromBlock(AssortedUtilities.Blocks.flightBlockAdv)) {
+					recipeRegistry.remove(r.getRegistryName());
+				}
+			}
+			if (!AssortedUtilities.Config.enableBasicRecipe) {
+				if (output.getItem() == Item.getItemFromBlock(AssortedUtilities.Blocks.flightBlockBsc)) {
+					recipeRegistry.remove(r.getRegistryName());
+				}
+			}
 		}
 	}
 }

@@ -1,0 +1,21 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern":
+    [
+        "fff",
+        "f f",
+        "fff"
+    ],
+    "key":
+    {
+        "f":
+        {
+            "item": "asssortedutilities:portal-frame"
+        }
+    },
+    "result":
+    {
+        "item": "asssortedutilities:portal-controller",
+        "count": 1
+    }
+}

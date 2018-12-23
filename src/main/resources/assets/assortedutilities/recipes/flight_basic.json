@@ -1,0 +1,25 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern":
+    [
+        " i ",
+        " f ",
+        " i "
+    ],
+    "key":
+    {
+        "f":
+        {
+            "item": "minecraft:feather"
+        },
+        "i":
+        {
+            "item": "minecraft:iron_block"
+        }
+    },
+    "result":
+    {
+        "item": "asssortedutilities:flight-block-basic",
+        "count": 1
+    }
+}

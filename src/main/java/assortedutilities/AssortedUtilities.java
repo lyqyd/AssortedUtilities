@@ -110,9 +110,6 @@ public class AssortedUtilities {
 		prop = configFile.get("balance", "radiusAdvanced", 32);
 		prop.setComment("Distance in blocks for Advanced Flight Blocks to enable flight");
 		Config.radiusAdv = prop.getInt();
-		prop = configFile.get("balance", "cheapRecipeAdvanced", false);
-		prop.setComment("Use a significantly cheaper crafting recipe for the Advanced Flight Blocks.");
-		Config.cheapRecipe = prop.getBoolean();
 		prop = configFile.get("flight", "enableAdvancedRecipe", true);
 		prop.setComment("Enable Advanced Flight Block Recipe");
 		Config.enableAdvancedRecipe = prop.getBoolean();

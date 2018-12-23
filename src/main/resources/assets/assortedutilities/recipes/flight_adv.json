@@ -1,0 +1,37 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern":
+    [
+        "gig",
+        "dfd",
+        "eie"
+    ],
+    "key":
+    {
+        "d":
+        {
+            "item": "minecraft:diamond_block"
+        },
+        "e":
+        {
+            "item": "minecraft:emerald"
+        },
+        "f":
+        {
+            "item": "minecraft:feather"
+        },
+        "g":
+        {
+            "item": "minecraft:gold_block"
+        },
+        "i":
+        {
+            "item": "minecraft:diamond"
+        }
+    },
+    "result":
+    {
+        "item": "asssortedutilities:flight-block-advanced",
+        "count": 1
+    }
+}

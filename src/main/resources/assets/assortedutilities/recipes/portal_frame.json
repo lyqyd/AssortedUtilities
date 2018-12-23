@@ -1,0 +1,25 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern":
+    [
+        "i i",
+        " p ",
+        "i i"
+    ],
+    "key":
+    {
+        "i":
+        {
+            "item": "minecraft:iron_ingot"
+        },
+        "p":
+        {
+            "item": "minecraft:ender_pearl"
+        }
+    },
+    "result":
+    {
+        "item": "asssortedutilities:portal-frame",
+        "count": 1
+    }
+}
