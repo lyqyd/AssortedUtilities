@@ -11,6 +11,7 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -65,6 +66,11 @@ public class RegisterEventHandler {
 		event.getRegistry().registerAll(otherBlocks.toArray(new Block[otherBlocks.size()]));
 
 		prepareBlockItems(itemBlocks);
+	}
+
+	@SubscribeEvent
+	public void registerModels(ModelRegistryEvent event) {
+		AssortedUtilities.proxy.registerRenderInformation();
 	}
 
 	private void prepareBlockItems(ArrayList<Block> blocks) {

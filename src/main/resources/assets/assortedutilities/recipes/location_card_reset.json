@@ -2,7 +2,7 @@
     "type": "minecraft:crafting_shapeless",
     "ingredients": [
         {
-            "item": "asssortedutilities:portal-location-item"
+            "item": "assortedutilities:portal-location-item"
         }
     ],
     "result":
