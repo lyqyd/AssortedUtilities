@@ -1,6 +1,6 @@
 {
   "parent": "assortedutilities:block/data-card",
   "textures": {
-    "side": "assortedutilities:blocks/locationCard"
+    "side": "assortedutilities:blocks/location_card"
   }
 }

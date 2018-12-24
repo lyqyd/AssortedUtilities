@@ -1,6 +1,6 @@
 {
     "parent": "item/generated",
     "textures": {
-        "layer0": "assortedutilities:items/locationCard"
+        "layer0": "assortedutilities:items/location_card"
     }
 }
