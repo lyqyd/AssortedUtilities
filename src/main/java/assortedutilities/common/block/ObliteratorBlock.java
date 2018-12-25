@@ -8,6 +8,7 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraft.block.BlockContainer;
@@ -29,7 +30,7 @@ public class ObliteratorBlock extends BlockContainer {
 		setCreativeTab(CreativeTabs.MISC);
 		setRegistryName("obliterator");
 		setUnlocalizedName("obliterator");
-		GameRegistry.registerTileEntity(ObliteratorTile.class, "obliterator");
+		GameRegistry.registerTileEntity(ObliteratorTile.class, new ResourceLocation("assortedutilities","obliterator"));
 	}
 
 	@Override

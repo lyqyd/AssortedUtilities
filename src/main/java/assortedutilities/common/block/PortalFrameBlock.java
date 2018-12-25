@@ -57,60 +57,6 @@ public class PortalFrameBlock extends Block {
 		
 		return result;
 	}
-	
-	/*private ArrayList<PortalControllerTile> findPortalControllers(World world, int x, int y, int z) {
-		BlockPos origin = new BlockPos(x, y, z);
-		AULog.debug("Origin: %s", origin.toString());
-		ArrayList<PortalControllerTile> result = new ArrayList<PortalControllerTile>();
-		BlockPos last = origin;
-		BlockPos current = origin;
-		int axisFlag = 0;	
-		
-		while (true) {
-			AULog.debug("Adding current block to list: %s", current.toString());
-			Block currBlock = world.getBlock(current.posX, current.posY, current.posZ);
-			if (currBlock instanceof PortalFrameBlock) {
-				AULog.debug("Current block is instance of PFB");
-				PortalFrameBlock portalFrame = (PortalFrameBlock)currBlock;
-				result.addAll(portalFrame.getConnectedControllers(world, current.posX, current.posY, current.posZ));
-				BlockPos[] neighbors = portalFrame.getFrameNeighbors(world, current.posX, current.posY, current.posZ);
-				BlockPos next = null;
-				int neighborCount = 0;
-				for (int i = 0; i < neighbors.length; i++) {
-					if (neighbors[i] != null) {
-						neighborCount++;
-						if (!last.equals(neighbors[i])) {
-							next = neighbors[i];
-							AULog.debug("Next found, is %s", next.toString());
-							switch(i) {
-								case 0:
-								case 1:
-									axisFlag = axisFlag | 1;
-									break;
-								case 2:
-								case 3:
-									axisFlag = axisFlag | 2;
-									break;
-								case 4:
-								case 5:
-									axisFlag = axisFlag | 4;
-									break;
-							}
-						}
-					}
-				}
-				if (neighborCount != 2 || axisFlag == 7) { break; }
-				if (origin.equals(next)) { break; }
-				last = current;
-				current = next;
-			} else {
-				AULog.debug("Panic! Current Block is not instance of PFB!");
-				break;
-			}
-		}
-		
-		return result;
-	}*/
 
 	private BlockPos[] getNeighborCoordinates(BlockPos origin) {
 		return new BlockPos[] {

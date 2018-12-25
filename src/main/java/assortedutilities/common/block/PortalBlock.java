@@ -12,6 +12,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -35,7 +36,7 @@ public class PortalBlock extends BlockContainer {
 		setLightLevel(0.75F);
 		setRegistryName("portal");
 		setUnlocalizedName("portal");
-		GameRegistry.registerTileEntity(PortalTile.class, "portal");
+		GameRegistry.registerTileEntity(PortalTile.class, new ResourceLocation("assortedutilities", "portal"));
 	}
 
 	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
