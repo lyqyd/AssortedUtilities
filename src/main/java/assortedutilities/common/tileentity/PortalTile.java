@@ -24,9 +24,9 @@ import java.util.*;
 
 public class PortalTile extends TileEntity {
 	
-	private Vec3d destination;
+	private Vec3d destination = new Vec3d(0.0D, 72.0D, 0.0D);
 	private int destDimension = 0;
-	private float yaw;
+	private float yaw = 0;
 
 	public void onCollide(Entity entity) {
 		EntityPlayerMP player = null;
@@ -48,7 +48,6 @@ public class PortalTile extends TileEntity {
 				} catch (IllegalAccessException e) {
 					AULog.warn("Cannot access invulnerability field!");
 				}
-				AULog.debug("Invuln: %b", player.isInvulnerableDimensionChange());
 			}
 
 			MinecraftServer server = entity.getServer();
@@ -124,7 +123,6 @@ public class PortalTile extends TileEntity {
 				AULog.debug("Setting new player position: %f %f %f", x, y, z);
 				player.connection.setPlayerLocation(x, y, z, yaw, entity.rotationPitch);
 				player.addExperienceLevel(0);
-				AULog.debug("Invuln: %b", player.isInvulnerableDimensionChange());
 			} else {
 				AULog.debug("Setting new entity position: %f %f %f", x, y, z);
 				entity.setPosition(x, y, z);

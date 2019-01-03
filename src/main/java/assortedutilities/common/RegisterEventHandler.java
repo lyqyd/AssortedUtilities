@@ -3,6 +3,7 @@ package assortedutilities.common;
 import assortedutilities.AssortedUtilities;
 import assortedutilities.common.block.*;
 import assortedutilities.common.item.PortalLocationItem;
+import assortedutilities.common.tileentity.*;
 import assortedutilities.common.util.AULog;
 import com.google.common.collect.Lists;
 import net.minecraft.block.Block;
@@ -11,10 +12,12 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.ForgeRegistry;
 
 import java.util.ArrayList;
@@ -66,6 +69,12 @@ public class RegisterEventHandler {
 		event.getRegistry().registerAll(otherBlocks.toArray(new Block[otherBlocks.size()]));
 
 		prepareBlockItems(itemBlocks);
+
+		GameRegistry.registerTileEntity(AdvancedFlightTile.class, new ResourceLocation("assortedutilities","flightBlockAdvanced"));
+		GameRegistry.registerTileEntity(BasicFlightTile.class, new ResourceLocation("assortedutilities","flightBlockBasic"));
+		GameRegistry.registerTileEntity(ObliteratorTile.class, new ResourceLocation("assortedutilities","obliterator"));
+		GameRegistry.registerTileEntity(PortalTile.class, new ResourceLocation("assortedutilities", "portal"));
+		GameRegistry.registerTileEntity(PortalControllerTile.class, new ResourceLocation("assortedutilities", "portalController"));
 	}
 
 	@SubscribeEvent

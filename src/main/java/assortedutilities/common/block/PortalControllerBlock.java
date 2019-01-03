@@ -40,7 +40,6 @@ public class PortalControllerBlock extends BlockContainer {
 		setCreativeTab(CreativeTabs.TRANSPORTATION);
 		setRegistryName("portal-controller");
 		setUnlocalizedName("portal-controller");
-		GameRegistry.registerTileEntity(PortalControllerTile.class, new ResourceLocation("assortedutilities", "portalController"));
 	}
 
 	static final AxisAlignedBB UP_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.25D, 1.0D);
@@ -87,6 +86,11 @@ public class PortalControllerBlock extends BlockContainer {
 				return EAST_AABB;
 		}
 		return Block.FULL_BLOCK_AABB;
+	}
+
+	@Override
+	public boolean hasTileEntity(IBlockState state) {
+		return true;
 	}
 
 	@Override

@@ -30,8 +30,9 @@ public class ObliteratorBlock extends BlockContainer {
 		setCreativeTab(CreativeTabs.MISC);
 		setRegistryName("obliterator");
 		setUnlocalizedName("obliterator");
-		GameRegistry.registerTileEntity(ObliteratorTile.class, new ResourceLocation("assortedutilities","obliterator"));
 	}
+
+
 
 	@Override
 	public EnumBlockRenderType getRenderType(IBlockState state) {
@@ -56,6 +57,12 @@ public class ObliteratorBlock extends BlockContainer {
 		return state.getValue(ObliteratorBlock.FACING).getIndex();
 	}
 
+	@Override
+	public boolean hasTileEntity(IBlockState state) {
+		return true;
+	}
+
+	@Override
 	public TileEntity createNewTileEntity(World world, int metadata) {
 		return new ObliteratorTile();
 	}

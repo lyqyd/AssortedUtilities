@@ -36,7 +36,6 @@ public class PortalBlock extends BlockContainer {
 		setLightLevel(0.75F);
 		setRegistryName("portal");
 		setUnlocalizedName("portal");
-		GameRegistry.registerTileEntity(PortalTile.class, new ResourceLocation("assortedutilities", "portal"));
 	}
 
 	public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
@@ -89,6 +88,11 @@ public class PortalBlock extends BlockContainer {
 	@SideOnly(Side.CLIENT)
 	public BlockRenderLayer getBlockLayer() {
 		return BlockRenderLayer.TRANSLUCENT;
+	}
+
+	@Override
+	public boolean hasTileEntity(IBlockState state) {
+		return true;
 	}
 	
 	@Override

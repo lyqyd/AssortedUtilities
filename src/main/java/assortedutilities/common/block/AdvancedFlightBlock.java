@@ -3,6 +3,7 @@ package assortedutilities.common.block;
 import assortedutilities.AssortedUtilities;
 import assortedutilities.common.tileentity.AdvancedFlightTile;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -16,7 +17,11 @@ public class AdvancedFlightBlock extends FlightBlockBase {
 		super(AssortedUtilities.Config.silkTouchRequiredAdv, new ItemStack(Item.getItemFromBlock(Block.getBlockFromName("minecraft:diamond_block")), 2));
 		setRegistryName("flight-block-advanced");
 		setUnlocalizedName("flight-block-advanced");
-		GameRegistry.registerTileEntity(AdvancedFlightTile.class, new ResourceLocation("assortedutilities","flightBlockAdvanced"));
+	}
+
+	@Override
+	public boolean hasTileEntity(IBlockState state) {
+		return true;
 	}
 
 	@Override
